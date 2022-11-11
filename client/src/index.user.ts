@@ -1,3 +1,7 @@
+import { createRoot as reactDOMCreateRoot } from "react-dom/client";
+import { createElement as reactCreateElement } from "react";
+
+import { DocumentsTabContent } from "./components/DocumentsTabContent";
 import { createElem, e, waitForSelector } from "./helpers/elements";
 import { urlCheck } from "./helpers/url";
 
@@ -44,6 +48,21 @@ try {
         "Documents"
       )
     );
+    const docTabContentDiv = e(tabsContainer).addElem(
+      "div",
+      {
+        id: "ui-id-doc-content",
+        className: "ui-tabs-panel ui-corner-bottom ui-widget-content",
+        attributes: {
+          "aria-live": "polite",
+          "aria-labelledby": "ui-id-doc-tab",
+          "aria-hidden": "true",
+          role: "tabpanel",
+        },
+        style: { display: "none" },
+      },
+      createElem("p", null, "Chargement...")
+    );
 
     //MANAGE TAB STATE
     let lastSelectedLI =
@@ -58,6 +77,23 @@ try {
       const lastTabContentDiv = getLITabContent(lastSelectedLI);
       if (lastTabContentDiv) setVisualTabContent(lastTabContentDiv, false);
       setVisualTabContent(docTabContentDiv, true);
+
+      //create / update react tree
+
+      //dynamic imports are complicated in a userscript
+      // const [
+      //   { DocumentsTabContent },
+      //   { render: reactDOMRender },
+      //   { createElement: reactCreateElement },
+      // ] = await Promise.all([
+      //   import("./components/DocumentsTabContent"),
+      //   import("react-dom"),
+      //   import("react"),
+      // ]);
+
+      reactDOMCreateRoot(docTabContentDiv).render(
+        reactCreateElement(DocumentsTabContent)
+      );
     }
     function onDeselectDocsTab(evt: MouseEvent) {
       if (evt.currentTarget === lastSelectedLI) {
@@ -93,24 +129,6 @@ try {
       }
       return undefined;
     }
-
-    const docTabContentDiv = e(tabsContainer).addElem(
-      "div",
-      {
-        id: "ui-id-doc-content",
-        className: "ui-tabs-panel ui-corner-bottom ui-widget-content",
-        attributes: {
-          "aria-live": "polite",
-          "aria-labelledby": "ui-id-doc-tab",
-          "aria-hidden": "true",
-          role: "tabpanel",
-        },
-        style: { display: "none" },
-      },
-      createElem("br"),
-      createElem("i", { className: "fa fa-exclamation-triangle" }),
-      " L'onglet \"Documents\" ne fait pas partie de kibe-iCare et n'est pas maintenu par CSE"
-    );
 
     //TODO: dev
     // onSelectDocsTab();
