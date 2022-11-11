@@ -1,5 +1,17 @@
-import { createRoot as reactDOMCreateRoot } from "react-dom/client";
-import { createElement as reactCreateElement } from "react";
+// ==UserScript==
+// @name        iCare GED Integration
+// @namespace   Violentmonkey Scripts
+// @noframes
+// @match       https://icare-vali.lausanne.ch/icare/*
+// @match       https://icare.lausanne.ch/icare/*
+// @grant       none
+// @version     1.0
+// @author      Nicolas Maitre (mail privé: nmaitre@ik.me)
+// @description GED Integration in icare
+// ==/UserScript==
+
+import { createRoot as reactDOMCreateRoot, Root } from "react-dom/client";
+import { createElement as reactCreateElement, StrictMode } from "react";
 
 import { DocumentsTabContent } from "./components/DocumentsTabContent";
 import { createElem, e, waitForSelector } from "./helpers/elements";
@@ -70,6 +82,8 @@ try {
         "li.ui-tabs-active.ui-state-active"
       ) ?? undefined;
 
+    let reactRoot: Root | undefined;
+
     function onSelectDocsTab(evt?: MouseEvent) {
       setVisualTab(docTabLI, true);
       if (lastSelectedLI) setVisualTab(lastSelectedLI, false);
@@ -91,8 +105,13 @@ try {
       //   import("react"),
       // ]);
 
-      reactDOMCreateRoot(docTabContentDiv).render(
-        reactCreateElement(DocumentsTabContent)
+      if (!reactRoot) reactRoot = reactDOMCreateRoot(docTabContentDiv);
+      reactRoot.render(
+        reactCreateElement(
+          StrictMode,
+          null,
+          reactCreateElement(DocumentsTabContent)
+        )
       );
     }
     function onDeselectDocsTab(evt: MouseEvent) {
