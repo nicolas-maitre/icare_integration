@@ -66,25 +66,40 @@ export function addElement<T extends ElemType>(
 }
 
 export function e(elem: Element) {
-  function addElem<T extends ElemType>(
+  function thisAddElem<T extends ElemType>(
     type: T,
     props?: ElemRealProps<T>,
     ...children: ChildElem[]
   ) {
     return addElement(elem, type, props, ...children);
   }
-  return { elem, addElem };
+  function thisWaitForSelector<T extends HTMLElement>(
+    selector: string | (() => T | null),
+    options?: Omit<WaitForSelectorOptions, "parent">
+  ) {
+    return waitForSelector(selector, { ...options, parent: elem });
+  }
+  return {
+    elem,
+    addElem: thisAddElem,
+    waitForSelector: thisWaitForSelector,
+  };
+}
+
+interface WaitForSelectorOptions {
+  parent?: Element;
+  checkInterval?: number;
+  maxChecks?: number;
 }
 
 export function waitForSelector<T extends HTMLElement>(
   selector: string | (() => T | null),
-  checkInterval = 100,
-  maxChecks = 50
+  { parent, checkInterval = 100, maxChecks = 50 }: WaitForSelectorOptions = {}
 ): Promise<T> {
   const res: T | null =
     typeof selector === "function"
       ? selector()
-      : document.querySelector(selector);
+      : (parent ?? document).querySelector(selector);
 
   return new Promise((resolve, reject) => {
     if (res === null) {
@@ -94,7 +109,7 @@ export function waitForSelector<T extends HTMLElement>(
       }
       setTimeout(
         () =>
-          waitForSelector(selector, checkInterval, maxChecks - 1)
+          waitForSelector(selector, { checkInterval, maxChecks: maxChecks - 1 })
             // @ts-ignore because all html elements inherit from HTMLElement anyways
             .then(resolve)
             .catch(reject),
