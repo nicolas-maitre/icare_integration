@@ -1,0 +1,45 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'icare_integration_server'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=icare_integration_server",
+          "--package=icare_integration_server"
+        ],
+        "filter": {
+          "name": "icare_integration_server",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'icare_integration_server'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=icare_integration_server",
+          "--package=icare_integration_server"
+        ],
+        "filter": {
+          "name": "icare_integration_server",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
