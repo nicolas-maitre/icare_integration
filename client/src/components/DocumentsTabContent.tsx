@@ -55,7 +55,9 @@ export function DocumentsTabContent() {
           <FileList files={files} />
         </ScFilesPanel>
         <ScHorizontalSplitterEdge />
-        <ScPreviewPanel></ScPreviewPanel>
+        <ScPreviewPanel>
+          Sélectionnez un fichier sur le panneau de gauche.
+        </ScPreviewPanel>
       </ScDocumentsTabContent>
       <br />
       <i className="fa fa-exclamation-triangle" /> L'onglet "Documents" ne fait
@@ -78,13 +80,21 @@ const ScPanel = styled.div`
   padding: 10px;
 `;
 const ScFilesPanel = styled(ScPanel)`
-  /* flex: 1; */
+  /* flex: 1;
+  max-width: max(200px, 25%); */
   min-width: 200px;
   overflow: hidden;
   overflow-y: auto;
 `;
 const ScPreviewPanel = styled(ScPanel)`
   flex: 3;
+  //for text
+  display: flex;
+  justify-content: center;
+  flex-flow: column;
+  text-align: center;
+  font-size: 2em;
+  color: #666;
 `;
 const ScHorizontalSplitterEdge = styled.div`
   cursor: col-resize;

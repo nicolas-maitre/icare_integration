@@ -20,7 +20,13 @@ import { urlCheck } from "./helpers/url";
 try {
   await (async () => {
     //Check for contract page
-    if (!urlCheck("/icare/Be/VertragEdit.do")) return;
+    if (
+      !urlCheck([
+        "/icare/Be/VertragEdit.do",
+        "/icare/Ad/WartelisteToPlatzierung.do",
+      ])
+    )
+      return;
 
     const tabsContainer = await waitForSelector("#tabs");
     const tabList = await e(tabsContainer).waitForSelector("ul[role=tablist]");
@@ -115,6 +121,8 @@ try {
       );
     }
     function onDeselectDocsTab(evt: MouseEvent) {
+      if ((evt.target as HTMLElement).tagName.toLowerCase() !== "a") return;
+
       if (evt.currentTarget === lastSelectedLI) {
         const lastTabContentDiv = getLITabContent(lastSelectedLI);
         if (lastTabContentDiv) setVisualTabContent(lastTabContentDiv, true);
