@@ -24,6 +24,7 @@ try {
       !urlCheck([
         "/icare/Be/VertragEdit.do",
         "/icare/Ad/WartelisteToPlatzierung.do",
+        "/icare/Ad/WartelisteToPlatzierungPrepare.do",
       ])
     )
       return;

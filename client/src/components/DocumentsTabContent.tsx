@@ -1,7 +1,8 @@
 import * as React from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import { AnyFile, FileList } from "./FileList";
+import { EdgeResizer } from "./SplitResizer";
 // import { FileLine } from "./FileList";
 
 const testFiles: AnyFile[] = [
@@ -48,13 +49,14 @@ const testFiles: AnyFile[] = [
 
 export function DocumentsTabContent() {
   const [files, setFiles] = useState(testFiles);
+  const filesPanelRef = useRef<HTMLDivElement>(null);
   return (
     <>
       <ScDocumentsTabContent>
-        <ScFilesPanel>
+        <ScFilesPanel ref={filesPanelRef}>
           <FileList files={files} />
         </ScFilesPanel>
-        <ScHorizontalSplitterEdge />
+        <EdgeResizer elementRef={filesPanelRef} />
         <ScPreviewPanel>
           Sélectionnez un fichier sur le panneau de gauche.
         </ScPreviewPanel>
@@ -95,45 +97,4 @@ const ScPreviewPanel = styled(ScPanel)`
   text-align: center;
   font-size: 2em;
   color: #666;
-`;
-const ScHorizontalSplitterEdge = styled.div`
-  cursor: col-resize;
-  width: 10px;
-  border-radius: 100px;
-  background-color: transparent;
-
-  position: relative;
-  ::before {
-    content: "";
-    display: inline-block;
-    position: absolute;
-    border-radius: 100px;
-    top: 30%;
-    height: 40%;
-    width: 30%;
-    left: 35%;
-    background-color: transparent;
-    transition: background-color 250ms;
-  }
-
-  /* Animations schenanigans */
-  transition: background-color 250ms;
-  :hover {
-    background-color: #00000050;
-    ::before {
-      background-color: #ffffffb0;
-    }
-  }
-  :active {
-    background-color: #00000051;
-    ::before {
-      background-color: #ffffffb1;
-    }
-  }
-  :hover:not(&:active) {
-    transition-delay: 500ms;
-    ::before {
-      transition-delay: 500ms;
-    }
-  }
 `;
