@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { AnyFile, FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
@@ -50,6 +50,14 @@ const testFiles: AnyFile[] = [
 export function DocumentsTabContent() {
   const [files, setFiles] = useState(testFiles);
   const filesPanelRef = useRef<HTMLDivElement>(null);
+  const [tmpRes, setTmpRes] = useState<any>();
+  useEffect(() => {
+    (async function callApi() {
+      const reqres = await fetch("http://127.0.0.1:8000/contracts/12/files");
+      const res = await reqres.json();
+      setTmpRes(res);
+    })();
+  }, []);
   return (
     <>
       <ScDocumentsTabContent>
@@ -59,6 +67,7 @@ export function DocumentsTabContent() {
         <EdgeResizer elementRef={filesPanelRef} />
         <ScPreviewPanel>
           Sélectionnez un fichier sur le panneau de gauche.
+          <code>{JSON.stringify(tmpRes)}</code>
         </ScPreviewPanel>
       </ScDocumentsTabContent>
       <br />
