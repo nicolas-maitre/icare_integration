@@ -18,6 +18,7 @@ specifiers:
   typescript: ^4.8.4
   webpack: ^5.75.0
   webpack-cli: ^4.10.0
+  zod: ^3.19.1
 
 dependencies:
   '@types/react': 18.0.25
@@ -29,6 +30,7 @@ dependencies:
   react-dom: 18.2.0_react@18.2.0
   react-is: 16.13.1
   styled-components: 5.3.6_vtcxgy2wlmese7djxl6h7ok674
+  zod: 3.19.1
 
 devDependencies:
   '@types/react-dom': 18.0.8
@@ -2405,4 +2407,8 @@ packages:
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+    dev: false
+
+  /zod/3.19.1:
+    resolution: {integrity: sha512-LYjZsEDhCdYET9ikFu6dVPGp2YH9DegXjdJToSzD9rO6fy4qiRYFoyEYwps88OseJlPyl2NOe2iJuhEhL7IpEA==}
     dev: false

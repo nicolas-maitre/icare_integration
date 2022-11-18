@@ -1,14 +1,15 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { AnyFile, FileList } from "./FileList";
+import { AnyFile } from "../types/file";
+import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
 // import { FileLine } from "./FileList";
 
 const testFiles: AnyFile[] = [
-  { id: 1, type: "file", name: "cool-file-1.pdf", subType: "pdf" },
-  { id: 2, type: "file", name: "cool-file-2.pdf", subType: "pdf" },
-  { id: 3, type: "file", name: "cool-file-3.doc", subType: "word" },
+  { id: 1, type: "file", name: "cool-file-1.pdf", mime_type: "pdf" },
+  { id: 2, type: "file", name: "cool-file-2.pdf", mime_type: "pdf" },
+  { id: 3, type: "file", name: "cool-file-3.doc", mime_type: "word" },
   {
     id: 4,
     type: "folder",
@@ -18,29 +19,29 @@ const testFiles: AnyFile[] = [
         id: 5,
         type: "file",
         name: "important-file-1.doc",
-        subType: "word",
+        mime_type: "word",
       },
-      { id: 6, type: "file", name: "important-file-2.doc", subType: "word" },
-      { id: 7, type: "file", name: "important-file-3.doc", subType: "word" },
+      { id: 6, type: "file", name: "important-file-2.doc", mime_type: "word" },
+      { id: 7, type: "file", name: "important-file-3.doc", mime_type: "word" },
     ],
   },
-  { id: 8, type: "file", name: "cool-file-4.xls", subType: "excel" },
+  { id: 8, type: "file", name: "cool-file-4.xls", mime_type: "excel" },
   {
     id: 9,
     type: "folder",
     name: "archive",
     children: [
-      { id: 10, type: "file", name: "archive-file-1.doc", subType: "word" },
-      { id: 11, type: "file", name: "archive-file-2.doc", subType: "word" },
-      { id: 12, type: "file", name: "archive-file-3.doc", subType: "word" },
+      { id: 10, type: "file", name: "archive-file-1.doc", mime_type: "word" },
+      { id: 11, type: "file", name: "archive-file-2.doc", mime_type: "word" },
+      { id: 12, type: "file", name: "archive-file-3.doc", mime_type: "word" },
       {
         id: 13,
         type: "folder",
         name: "2020",
         children: [
-          { id: 14, type: "file", name: "vieux-1.doc", subType: "word" },
-          { id: 15, type: "file", name: "vieux-2.doc", subType: "word" },
-          { id: 16, type: "file", name: "vieux-3.doc", subType: "word" },
+          { id: 14, type: "file", name: "vieux-1.doc", mime_type: "word" },
+          { id: 15, type: "file", name: "vieux-2.doc", mime_type: "word" },
+          { id: 16, type: "file", name: "vieux-3.doc", mime_type: "word" },
         ],
       },
     ],

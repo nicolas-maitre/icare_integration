@@ -33,14 +33,14 @@ struct AnyFile {
     file: FileEnum,
 }
 impl AnyFile {
-    fn create_file(id: FileID, name: String, sub_type: String) -> Self {
+    fn file(id: FileID, name: String, mime_type: String) -> Self {
         Self {
             id,
             name,
-            file: FileEnum::File(File { sub_type }),
+            file: FileEnum::File(File { mime_type }),
         }
     }
-    fn create_folder(id: FileID, name: String, children: Vec<AnyFile>) -> Self {
+    fn folder(id: FileID, name: String, children: Vec<AnyFile>) -> Self {
         Self {
             id,
             name,
@@ -62,7 +62,7 @@ impl Serialize for AnyFile {
         match &self.file {
             FileEnum::File(file) => {
                 s.serialize_field("type", "file")?;
-                s.serialize_field("subType", &file.sub_type)?;
+                s.serialize_field("subType", &file.mime_type)?;
             }
             FileEnum::Folder(folder) => {
                 s.serialize_field("type", "folder")?;
@@ -82,7 +82,7 @@ enum FileEnum {
 #[derive(Clone)]
 
 struct File {
-    sub_type: String,
+    mime_type: String,
 }
 
 #[derive(Clone)]

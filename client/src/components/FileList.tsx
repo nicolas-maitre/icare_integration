@@ -1,23 +1,7 @@
 import * as React from "react";
 import { CSSProperties } from "react";
 import styled from "styled-components";
-
-interface _BaseFile {
-  id: number;
-  type: unknown;
-  name: string;
-}
-interface Folder extends _BaseFile {
-  type: "folder";
-  children: AnyFile[];
-}
-
-type FileSubTypes = "pdf" | "word" | "excel" | "other"; //this is an example
-interface File extends _BaseFile {
-  type: "file";
-  subType: FileSubTypes;
-}
-export type AnyFile = Folder | File;
+import { AnyFile } from "../types/file";
 
 export interface FileListProps {
   files: AnyFile[];
@@ -59,7 +43,7 @@ const ScFilesList = styled.ul`
   /* gap: 0.5em; */
 `;
 
-const iconBySubType: Partial<Record<FileSubTypes | "folder", string>> = {
+const iconDictionary: Partial<Record<string | "folder" | "other", string>> = {
   folder: "folder",
   pdf: "file-pdf",
   other: "file",
@@ -73,9 +57,9 @@ function FileLine({ file, indentLevel = 0 }: FileLineProps) {
   const isFolder = file.type === "folder";
   const isOpen = true;
   const iconClassPostfix =
-    file.type === "folder"
-      ? iconBySubType.folder
-      : iconBySubType[file.subType] ?? iconBySubType.other;
+    (file.type === "folder"
+      ? iconDictionary.folder
+      : iconDictionary[file.mime_type]) ?? iconDictionary.other;
 
   return (
     <ScFileLine style={{ "--indent-level": indentLevel } as CSSProperties}>
