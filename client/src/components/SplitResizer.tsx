@@ -38,7 +38,7 @@ export function EdgeResizer({
             isDragging: true,
             startPos: evt.clientX,
             startWidth: elemWidth,
-            baseWidth: state.current.baseWidth || elemWidth + "px",
+            baseWidth: state.current.baseWidth,
           });
           document.body.addEventListener(
             "mousemove",

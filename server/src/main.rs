@@ -90,28 +90,53 @@ struct Folder {
     children: Vec<AnyFile>,
 }
 
-#[get("/contracts/<contract_id>/files")]
-fn get_contract_files(contract_id: i32) -> Result<Json<Vec<AnyFile>>, Status> {
-    let static_contracts = HashMap::from([(
-        1,
-        vec![
-            AnyFile::create_file(1, s("import.pdf"), s("pdf")),
-            AnyFile::create_file(2, s("yes.pdf"), s("pdf")),
-            AnyFile::create_folder(
-                3,
-                s("folder"),
+#[get("/people/<person_id>/contracts/<contract_id>/files")]
+fn get_contract_files(person_id: i32, contract_id: i32) -> Result<Json<Vec<AnyFile>>, Status> {
+    //map->person_id->contract_id->contract
+    let static_contracts = HashMap::from([
+        (
+            1,
+            HashMap::from([(
+                1,
                 vec![
-                    AnyFile::create_file(4, s("plus.xls"), s("xls")),
-                    AnyFile::create_file(5, s("moins.pdf"), s("pdf")),
+                    AnyFile::file(1, s("import.pdf"), s("pdf")),
+                    AnyFile::file(2, s("yes.pdf"), s("pdf")),
+                    AnyFile::folder(
+                        3,
+                        s("folder"),
+                        vec![
+                            AnyFile::file(4, s("plus.xls"), s("xls")),
+                            AnyFile::file(5, s("moins.pdf"), s("pdf")),
+                        ],
+                    ),
                 ],
-            ),
-        ],
-    )]);
+            )]),
+        ),
+        (
+            74104,
+            HashMap::from([(
+                005,
+                vec![
+                    AnyFile::file(2, s("yes.pdf"), s("pdf")),
+                    AnyFile::folder(
+                        3,
+                        s("folder"),
+                        vec![
+                            AnyFile::file(4, s("plus.xls"), s("xls")),
+                            AnyFile::file(5, s("moins.pdf"), s("pdf")),
+                        ],
+                    ),
+                    AnyFile::file(1, s("export.pdf"), s("pdf")),
+                ],
+            )]),
+        ),
+    ]);
 
-    if let Some(res) = static_contracts.get(&contract_id) {
-        return Ok(Json(res.to_vec()));
-    };
-    return Err(Status::NotFound);
+    if let Some(res) = (|| static_contracts.get(&person_id)?.get(&contract_id))() {
+        Ok(Json(res.to_vec()))
+    } else {
+        Err(Status::NotFound)
+    }
 }
 
 fn main() {

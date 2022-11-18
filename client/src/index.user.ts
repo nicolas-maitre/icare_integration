@@ -29,6 +29,8 @@ try {
     )
       return;
 
+    const titleElement = document.querySelector("#jqContentTable #data h2");
+
     const tabsContainer = await waitForSelector("#tabs");
     const tabList = await e(tabsContainer).waitForSelector("ul[role=tablist]");
     const otherTabListLIs = [...tabList.querySelectorAll("li")];
@@ -113,11 +115,19 @@ try {
       // ]);
 
       if (!reactRoot) reactRoot = reactDOMCreateRoot(docTabContentDiv);
+
+      //query person id and contract id from title
+      const [, personId, contractId] =
+        titleElement?.textContent
+          ?.trim()
+          .split("-")
+          .map((i) => parseInt(i)) ?? [];
+
       reactRoot.render(
         reactCreateElement(
           StrictMode,
           null,
-          reactCreateElement(DocumentsTabContent)
+          reactCreateElement(DocumentsTabContent, { personId, contractId })
         )
       );
     }

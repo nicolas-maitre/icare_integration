@@ -1,74 +1,65 @@
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import styled from "styled-components";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 import { AnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
-// import { FileLine } from "./FileList";
 
-const testFiles: AnyFile[] = [
-  { id: 1, type: "file", name: "cool-file-1.pdf", mime_type: "pdf" },
-  { id: 2, type: "file", name: "cool-file-2.pdf", mime_type: "pdf" },
-  { id: 3, type: "file", name: "cool-file-3.doc", mime_type: "word" },
-  {
-    id: 4,
-    type: "folder",
-    name: "important",
-    children: [
-      {
-        id: 5,
-        type: "file",
-        name: "important-file-1.doc",
-        mime_type: "word",
-      },
-      { id: 6, type: "file", name: "important-file-2.doc", mime_type: "word" },
-      { id: 7, type: "file", name: "important-file-3.doc", mime_type: "word" },
-    ],
-  },
-  { id: 8, type: "file", name: "cool-file-4.xls", mime_type: "excel" },
-  {
-    id: 9,
-    type: "folder",
-    name: "archive",
-    children: [
-      { id: 10, type: "file", name: "archive-file-1.doc", mime_type: "word" },
-      { id: 11, type: "file", name: "archive-file-2.doc", mime_type: "word" },
-      { id: 12, type: "file", name: "archive-file-3.doc", mime_type: "word" },
-      {
-        id: 13,
-        type: "folder",
-        name: "2020",
-        children: [
-          { id: 14, type: "file", name: "vieux-1.doc", mime_type: "word" },
-          { id: 15, type: "file", name: "vieux-2.doc", mime_type: "word" },
-          { id: 16, type: "file", name: "vieux-3.doc", mime_type: "word" },
-        ],
-      },
-    ],
-  },
-];
+const API_URL = "http://127.0.0.1:8000";
 
-export function DocumentsTabContent() {
-  const [files, setFiles] = useState(testFiles);
+const queryClient = new QueryClient();
+export function DocumentsTabContent(props: DocumentsTabContentProps) {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <DocumentsTabContentContent {...props} />
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+}
+
+function useContractFiles(personId: number, contractId: number) {
+  return useQuery(
+    ["personContractFiles", personId, contractId],
+    async () =>
+      (await (
+        await fetch(
+          `${API_URL}/people/${personId}/contracts/${contractId}/files`
+        )
+      ).json()) as AnyFile[],
+    { retry: false }
+  );
+}
+
+interface DocumentsTabContentProps {
+  personId: number;
+  contractId: number;
+}
+export function DocumentsTabContentContent({
+  personId,
+  contractId,
+}: DocumentsTabContentProps) {
+  const {
+    data: files,
+    isLoading,
+    isError,
+  } = useContractFiles(personId, contractId);
   const filesPanelRef = useRef<HTMLDivElement>(null);
-  const [tmpRes, setTmpRes] = useState<any>();
-  useEffect(() => {
-    (async function callApi() {
-      const reqres = await fetch("http://127.0.0.1:8000/contracts/12/files");
-      const res = await reqres.json();
-      setTmpRes(res);
-    })();
-  }, []);
   return (
     <>
       <ScDocumentsTabContent>
         <ScFilesPanel ref={filesPanelRef}>
-          <FileList files={files} />
+          {isError && "Une erreur s'est produite..."}
+          {isLoading ? "Chargement..." : <FileList files={files ?? []} />}
         </ScFilesPanel>
         <EdgeResizer elementRef={filesPanelRef} />
         <ScPreviewPanel>
           Sélectionnez un fichier sur le panneau de gauche.
-          <code>{JSON.stringify(tmpRes)}</code>
         </ScPreviewPanel>
       </ScDocumentsTabContent>
       <br />
@@ -82,8 +73,7 @@ const ScDocumentsTabContent = styled.div`
   display: flex;
   flex-flow: row nowrap;
   max-height: max(500px, 90vh);
-  /* gap: 10px; */
-  /* &,* {box-sizing: border-box;} */
+  min-height: 400px;
 `;
 
 const ScPanel = styled.div`
