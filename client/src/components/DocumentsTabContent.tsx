@@ -6,9 +6,10 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { AnyFile } from "../types/file";
+import { AnyFile, ZodAnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
+import { z } from "zod";
 
 const API_URL = "http://127.0.0.1:8000";
 
@@ -26,12 +27,15 @@ export function DocumentsTabContent(props: DocumentsTabContentProps) {
 function useContractFiles(personId: number, contractId: number) {
   return useQuery(
     ["personContractFiles", personId, contractId],
-    async () =>
-      (await (
-        await fetch(
-          `${API_URL}/people/${personId}/contracts/${contractId}/files`
-        )
-      ).json()) as AnyFile[],
+    async () => {
+      const tmpRes = await fetch(
+        `${API_URL}/people/${personId}/contracts/${contractId}/files`
+      );
+      if (!tmpRes.ok) throw new Error();
+
+      return z.array(ZodAnyFile).parse(await tmpRes.json());
+    },
+
     { retry: false }
   );
 }

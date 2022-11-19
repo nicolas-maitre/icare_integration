@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import ReactDOM from "react-dom/client";
 import "./css/index.css";
 import "./css/icare.min.css";
@@ -7,4 +8,4 @@ import { DocumentsTabContent } from "../../src/components/DocumentsTabContent";
 
 ReactDOM.createRoot(
   document.getElementById("ui-id-doc-content") as HTMLElement
-).render(<DocumentsTabContent personId={74104} contractId={5} />);
+).render(<DocumentsTabContent personId={1} contractId={1} />);
