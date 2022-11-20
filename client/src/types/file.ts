@@ -17,7 +17,7 @@ export type Folder = z.infer<typeof _ZodFolder> & { children: AnyFile[] };
 
 export const ZodFile = _ZodBaseFile.extend({
   type: z.literal("file"),
-  mime_type: z.string(),
+  // mime_type: z.string(),
 });
 export type File = z.infer<typeof ZodFile>;
 

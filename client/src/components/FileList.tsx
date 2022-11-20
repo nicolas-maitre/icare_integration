@@ -5,6 +5,7 @@ import { AnyFile } from "../types/file";
 
 export interface FileListProps {
   files: AnyFile[];
+  onSelect?: (file: AnyFile) => void;
 }
 export function FileList({ files }: FileListProps) {
   return (

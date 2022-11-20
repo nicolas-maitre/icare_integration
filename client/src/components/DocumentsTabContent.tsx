@@ -6,7 +6,7 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { AnyFile, ZodAnyFile } from "../types/file";
+import { ZodAnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
 import { z } from "zod";
@@ -35,7 +35,6 @@ function useContractFiles(personId: number, contractId: number) {
 
       return z.array(ZodAnyFile).parse(await tmpRes.json());
     },
-
     { retry: false }
   );
 }
