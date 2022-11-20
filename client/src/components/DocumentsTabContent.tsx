@@ -1,17 +1,17 @@
 import * as React from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { ZodAnyFile } from "../types/file";
+import { AnyFile, ZodAnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
 import { z } from "zod";
-
-const API_URL = "http://127.0.0.1:8000";
+import { FilePreviewer } from "./FilePreviewer";
+import { API_URL } from "../env";
 
 const queryClient = new QueryClient();
 export function DocumentsTabContent(props: DocumentsTabContentProps) {
@@ -53,16 +53,32 @@ export function DocumentsTabContentContent({
     isError,
   } = useContractFiles(personId, contractId);
   const filesPanelRef = useRef<HTMLDivElement>(null);
+  const [selectedFile, setSelectedFile] = useState<AnyFile | undefined>();
   return (
     <>
       <ScDocumentsTabContent>
-        <ScFilesPanel ref={filesPanelRef}>
+        <ScFilesPanel
+          ref={filesPanelRef}
+          onClick={() => setSelectedFile(undefined)}
+        >
           {isError && "Une erreur s'est produite..."}
-          {isLoading ? "Chargement..." : <FileList files={files ?? []} />}
+          {isLoading ? (
+            "Chargement..."
+          ) : (
+            <FileList
+              files={files ?? []}
+              selectedFile={selectedFile}
+              onSelect={setSelectedFile}
+            />
+          )}
         </ScFilesPanel>
         <EdgeResizer elementRef={filesPanelRef} />
         <ScPreviewPanel>
-          Sélectionnez un fichier sur le panneau de gauche.
+          {selectedFile ? (
+            <FilePreviewer file={selectedFile} />
+          ) : (
+            <>Sélectionnez un fichier sur le panneau de gauche.</>
+          )}
         </ScPreviewPanel>
       </ScDocumentsTabContent>
       <br />
@@ -76,7 +92,7 @@ const ScDocumentsTabContent = styled.div`
   display: flex;
   flex-flow: row nowrap;
   max-height: max(500px, 90vh);
-  min-height: 400px;
+  min-height: max(400px, 60vh);
 `;
 
 const ScPanel = styled.div`

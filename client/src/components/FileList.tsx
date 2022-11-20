@@ -1,36 +1,39 @@
 import * as React from "react";
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import styled from "styled-components";
-import { AnyFile } from "../types/file";
+import { AnyFile, getFileType } from "../types/file";
 
 export interface FileListProps {
   files: AnyFile[];
   onSelect?: (file: AnyFile) => void;
+  selectedFile?: AnyFile;
 }
-export function FileList({ files }: FileListProps) {
+export function FileList(props: FileListProps) {
   return (
     <ScFilesList>
-      <InternalFileList files={files} indentLevel={0} />
+      <InternalFileList {...props} indentLevel={0} />
     </ScFilesList>
   );
 }
-interface InternalFileListProps {
-  files: AnyFile[];
+interface InternalFileListProps extends FileListProps {
   indentLevel: number;
 }
-function InternalFileList({ files, indentLevel }: InternalFileListProps) {
+function InternalFileList({
+  files,
+  indentLevel,
+  selectedFile,
+  onSelect,
+}: InternalFileListProps) {
   return (
     <>
-      {files.map((file, index) => (
-        <React.Fragment key={file.id}>
-          <FileLine key={index} file={file} indentLevel={indentLevel} />
-          {file.type === "folder" && (
-            <InternalFileList
-              files={file.children}
-              indentLevel={indentLevel + 1}
-            />
-          )}
-        </React.Fragment>
+      {files.map((file) => (
+        <FileLine
+          key={file.id}
+          file={file}
+          indentLevel={indentLevel}
+          selectedFile={selectedFile}
+          onSelect={onSelect}
+        />
       ))}
     </>
   );
@@ -52,22 +55,55 @@ const iconDictionary: Partial<Record<string | "folder" | "other", string>> = {
 interface FileLineProps {
   file: AnyFile;
   indentLevel?: number;
+  selectedFile?: AnyFile;
+  onSelect?: (file: AnyFile) => void;
 }
 
-function FileLine({ file, indentLevel = 0 }: FileLineProps) {
+function FileLine({
+  file,
+  indentLevel = 0,
+  selectedFile,
+  onSelect,
+}: FileLineProps) {
   const isFolder = file.type === "folder";
-  const isOpen = true;
+  const [isOpen, setIsOpen] = useState(indentLevel < 1);
+  const isSelected = file.id === selectedFile?.id;
+  const fileType = getFileType(file);
   const iconClassPostfix =
-    (file.type === "folder"
-      ? iconDictionary.folder
-      : iconDictionary[file.mime_type]) ?? iconDictionary.other;
+    iconDictionary[fileType ?? "other"] ?? iconDictionary.other;
 
   return (
-    <ScFileLine style={{ "--indent-level": indentLevel } as CSSProperties}>
-      <i className={`type-icon fa fa-${iconClassPostfix}`} />
-      <p>{file.name}</p>
-      {isFolder && <i className={`fa fa-caret-${isOpen ? "down" : "right"}`} />}
-    </ScFileLine>
+    <>
+      <ScFileLine
+        className={isSelected ? "selected-file" : ""}
+        style={{ "--indent-level": indentLevel } as CSSProperties}
+        onClick={(evt) => {
+          evt.stopPropagation();
+          setIsOpen(true);
+          onSelect?.(file);
+        }}
+      >
+        <i className={`type-icon fa fa-${iconClassPostfix}`} />
+        <p>{file.name}</p>
+        {isFolder && (
+          <i
+            className={`fa fa-caret-${isOpen ? "down" : "right"}`}
+            onClick={(evt) => {
+              evt.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+          />
+        )}
+      </ScFileLine>
+      {isOpen && file.type === "folder" && (
+        <InternalFileList
+          files={file.children}
+          indentLevel={indentLevel + 1}
+          selectedFile={selectedFile}
+          onSelect={onSelect}
+        />
+      )}
+    </>
   );
 }
 
@@ -83,6 +119,11 @@ const ScFileLine = styled.li`
   cursor: pointer;
   :hover {
     background: #0003;
+  }
+
+  &.selected-file {
+    background-color: #666;
+    color: white;
   }
 
   i.type-icon {

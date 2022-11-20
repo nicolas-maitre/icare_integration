@@ -7,6 +7,7 @@ use std::{
 
 use rocket::response::NamedFile;
 use serde::{ser::SerializeMap, Serialize, Serializer};
+use urlencoding::encode;
 
 type FileID = u64;
 
@@ -119,13 +120,16 @@ fn get_sub_files(path: &PathBuf) -> Option<Vec<AnyFile>> {
                 let name = name;
 
                 let file_path = path.join(name);
-                let Some(url) = file_path.to_str() else{
+                let Some(file_path_str) = file_path.to_str() else{
                     return None;
                 };
 
                 let mut hasher = DefaultHasher::new();
-                url.hash(&mut hasher);
+                file_path_str.hash(&mut hasher);
                 let id = hasher.finish();
+
+                // "/people/<person_id>/contracts/<contract_id>/file_urls/<file_url>"
+                let url = format!("/people/0/contracts/0/file_urls/{}", encode(file_path_str));
 
                 let Ok(file_type) = file.file_type() else{
                     return None;

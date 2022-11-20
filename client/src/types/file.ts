@@ -17,9 +17,19 @@ export type Folder = z.infer<typeof _ZodFolder> & { children: AnyFile[] };
 
 export const ZodFile = _ZodBaseFile.extend({
   type: z.literal("file"),
+  url: z.string(),
   // mime_type: z.string(),
 });
 export type File = z.infer<typeof ZodFile>;
 
 export const ZodAnyFile = z.union([ZodFile, ZodFolder]);
 export type AnyFile = z.infer<typeof ZodAnyFile>;
+
+export function getFileType(file: AnyFile) {
+  const fileNameParts = file.name.split(".");
+  return file.type === "folder"
+    ? "folder"
+    : fileNameParts.length > 1
+    ? fileNameParts.at(-1)
+    : undefined;
+}
