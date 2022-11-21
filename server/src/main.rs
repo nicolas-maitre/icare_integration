@@ -4,6 +4,7 @@ use files::{get_file_raw_by_url, get_files_struct, AnyFile};
 use rocket::{config, http::Status, response::NamedFile, Config};
 use rocket_contrib::json::Json;
 mod cors;
+mod env;
 mod files;
 
 #[macro_use]

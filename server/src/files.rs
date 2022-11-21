@@ -9,6 +9,8 @@ use rocket::response::NamedFile;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use urlencoding::encode;
 
+use crate::env::BASE_FILES_PATH;
+
 type FileID = u64;
 
 #[derive(Clone)]
@@ -79,8 +81,6 @@ struct File {}
 struct Folder {
     children: Vec<AnyFile>,
 }
-
-const BASE_FILES_PATH: &str = "/tmp/icare_ged_files";
 
 pub fn get_files_struct(person_id: u32, contract_id: u32) -> Option<Vec<AnyFile>> {
     get_sub_files(&get_folder_path(person_id, contract_id))

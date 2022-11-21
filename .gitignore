@@ -1,2 +1,3 @@
 Projet pilote GED - Shortcut.lnk
 client/node_modules/
+server/src/env.rs
