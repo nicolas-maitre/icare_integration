@@ -61,9 +61,12 @@ export function DocumentsTabContentContent({
           ref={filesPanelRef}
           onClick={() => setSelectedFile(undefined)}
         >
-          {isError && "Une erreur s'est produite..."}
           {isLoading ? (
             "Chargement..."
+          ) : isError ? (
+            "Une erreur s'est produite..."
+          ) : !files?.length ? (
+            "Aucuns fichiers."
           ) : (
             <FileList
               files={files ?? []}
