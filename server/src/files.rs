@@ -83,26 +83,38 @@ struct Folder {
 }
 
 pub fn get_files_struct(person_id: u32, contract_id: u32) -> Option<Vec<AnyFile>> {
-    get_sub_files(&get_folder_path(person_id, contract_id))
+    get_sub_files(
+        person_id,
+        contract_id,
+        &get_physical_contract_files_root(person_id, contract_id),
+        &PathBuf::new(),
+    )
 }
 
-fn get_folder_path(person_id: u32, contract_id: u32) -> PathBuf {
-    [
-        "people",
-        &person_id.to_string(),
-        "contracts",
-        &contract_id.to_string(),
-        "files",
-    ]
-    .iter()
-    .collect()
+fn get_physical_contract_files_root(person_id: u32, contract_id: u32) -> PathBuf {
+    Path::new(BASE_FILES_PATH).join(
+        [
+            "people",
+            &person_id.to_string(),
+            "contracts",
+            &contract_id.to_string(),
+            "files",
+        ]
+        .iter()
+        .collect::<PathBuf>(),
+    )
 }
 fn get_physical_file_path(person_id: u32, contract_id: u32, url: String) -> PathBuf {
-    Path::new(BASE_FILES_PATH).join(url)
+    get_physical_contract_files_root(person_id, contract_id).join(url)
 }
 
-fn get_sub_files(path: &PathBuf) -> Option<Vec<AnyFile>> {
-    let physical_path = Path::new(BASE_FILES_PATH).join(path);
+fn get_sub_files(
+    person_id: u32,
+    contract_id: u32,
+    files_root: &PathBuf,
+    path: &PathBuf,
+) -> Option<Vec<AnyFile>> {
+    let physical_path = Path::new(files_root).join(path);
     let Ok(res) = read_dir(physical_path) else{
       return None;
     };
@@ -124,12 +136,17 @@ fn get_sub_files(path: &PathBuf) -> Option<Vec<AnyFile>> {
                     return None;
                 };
 
-                let mut hasher = DefaultHasher::new();
-                file_path_str.hash(&mut hasher);
-                let id = hasher.finish();
-
                 // "/people/<person_id>/contracts/<contract_id>/file_urls/<file_url>"
-                let url = format!("/people/0/contracts/0/file_urls/{}", encode(file_path_str));
+                let url = format!(
+                    "/people/{}/contracts/{}/files_url/{}",
+                    person_id,
+                    contract_id,
+                    encode(file_path_str)
+                );
+
+                let mut hasher = DefaultHasher::new();
+                url.hash(&mut hasher);
+                let id = hasher.finish();
 
                 let Ok(file_type) = file.file_type() else{
                     return None;
@@ -139,7 +156,9 @@ fn get_sub_files(path: &PathBuf) -> Option<Vec<AnyFile>> {
                     return Some(AnyFile::new_file(id, name, url));
                 }
                 if file_type.is_dir() {
-                    if let Some(sub_files) = get_sub_files(&file_path) {
+                    if let Some(sub_files) =
+                        get_sub_files(person_id, contract_id, files_root, &file_path)
+                    {
                         return Some(AnyFile::new_folder(id, name, url, sub_files));
                     }
                 }

@@ -15,17 +15,17 @@ fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFi
     if let Some(res) = get_files_struct(person_id, contract_id) {
         Ok(Json(res))
     } else {
-        Err(Status::NotFound)
+        Ok(Json(vec![]))
     }
 }
 
-#[get("/people/<person_id>/contracts/<contract_id>/file_urls/<file_url>")]
+#[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]
 fn get_contract_file_raw_by_url(
     person_id: u32,
     contract_id: u32,
-    file_url: String,
+    files_url: String,
 ) -> Result<NamedFile, Status> {
-    if let Ok(res) = get_file_raw_by_url(person_id, contract_id, file_url) {
+    if let Ok(res) = get_file_raw_by_url(person_id, contract_id, files_url) {
         Ok(res)
     } else {
         Err(Status::NotFound)
