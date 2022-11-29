@@ -11,6 +11,7 @@ use rocket_contrib::json::Json;
 use rocket_multipart_form_data::{
     mime, MultipartFormData, MultipartFormDataField, MultipartFormDataOptions, Repetition,
 };
+use serde::{Deserialize, Serialize};
 mod cors;
 mod env;
 mod files;
@@ -36,7 +37,14 @@ fn new_contract_files(
     new_contract_files_fn(content_type, data, person_id, contract_id)
 }
 
-const FILES_FIELD: &str = "files";
+const FILES_FORM_FIELD: &str = "files";
+const FILES_JSON_FORM_FIELD: &str = "files_json";
+
+#[derive(Deserialize, Debug)]
+struct NewFile {
+    r#type: String,
+    name: String,
+}
 
 fn new_contract_files_fn(
     content_type: &ContentType,
@@ -44,22 +52,50 @@ fn new_contract_files_fn(
     person_id: u32,
     contract_id: u32,
 ) -> Result<String, Status> {
-    let options = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
-        MultipartFormDataField::file(FILES_FIELD)
+    let fields_config = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
+        MultipartFormDataField::file(FILES_FORM_FIELD)
             .content_type_by_string(Some(mime::APPLICATION_PDF))
-            .unwrap(),
+            .unwrap()
+            .repetition(Repetition::infinite()),
+        MultipartFormDataField::text(FILES_JSON_FORM_FIELD),
     ]);
-    let multipart_form_data = MultipartFormData::parse(content_type, data, options).unwrap();
 
-    let Some(files) = multipart_form_data.files.get(FILES_FIELD) else {
+    let multipart_form_data = match MultipartFormData::parse(content_type, data, fields_config) {
+        Ok(m) => m,
+        Err(err) => {
+            println!("Err {}", err);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    let Some(files) = multipart_form_data.files.get(FILES_FORM_FIELD) else {
+        println!("err: no '{}'", FILES_FORM_FIELD);
         return Err(Status::BadRequest);
     };
 
-    if let Some(fname) = &files[0].file_name {
-        Ok(format!("first file: {}", fname))
-    } else {
-        Err(Status::BadRequest)
-    }
+    let Some(files_json) = multipart_form_data
+        .texts
+        .get(FILES_JSON_FORM_FIELD)
+        .and_then(|tfv| tfv.get(0))
+        .and_then(|tf| Some(tf.text.clone()))
+    else {
+        println!("err: no '{}'", FILES_JSON_FORM_FIELD);
+        return Err(Status::BadRequest);
+    };
+
+    let file_names: Vec<String> = files.iter().map_while(|f| f.file_name.clone()).collect();
+    let files_info_vec = match serde_json::from_str::<Vec<NewFile>>(&files_json) {
+        Ok(v) => v,
+        Err(err) => {
+            println!("parse err {}", err);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    Ok(format!(
+        "file_names: {:?}\nfile_infos_vec: {:?}",
+        file_names, files_info_vec
+    ))
 }
 
 #[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]

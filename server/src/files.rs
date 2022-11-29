@@ -11,7 +11,7 @@ use urlencoding::encode;
 
 use crate::env::BASE_FILES_PATH;
 
-type FileID = u64;
+pub type FileID = u64;
 
 #[derive(Clone)]
 pub struct AnyFile {

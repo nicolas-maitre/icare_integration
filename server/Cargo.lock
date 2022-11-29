@@ -404,6 +404,7 @@ dependencies = [
  "rocket-multipart-form-data",
  "rocket_contrib",
  "serde",
+ "serde_json",
  "urlencoding",
 ]
 
