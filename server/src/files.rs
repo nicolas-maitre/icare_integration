@@ -6,7 +6,7 @@ use std::{
 };
 
 use rocket::response::NamedFile;
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use urlencoding::encode;
 
 use crate::env::BASE_FILES_PATH;
@@ -177,4 +177,21 @@ pub fn get_file_raw_by_url(
 ) -> Result<NamedFile, std::io::Error> {
     let path = get_physical_file_path(person_id, contract_id, url);
     NamedFile::open(path)
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewFile {
+    r#type: String,
+    name: String,
+    sub_path: String,
+    data_index: Option<u8>,
+}
+
+pub fn store_new_file(
+    person_id: u32,
+    contract_id: u32,
+    new_file: &NewFile,
+    files_paths: &Vec<PathBuf>,
+) -> Result<(), String> {
+    Ok(())
 }

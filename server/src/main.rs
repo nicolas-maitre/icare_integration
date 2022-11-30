@@ -1,17 +1,19 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use files::{get_file_raw_by_url, get_files_struct, AnyFile};
+use std::{collections::HashMap, path::PathBuf};
+
+use files::{get_file_raw_by_url, get_files_struct, store_new_file, AnyFile, FileID, NewFile};
 use rocket::{
     config,
     http::{ContentType, Status},
-    response::NamedFile,
+    response::{status, NamedFile},
     Config, Data,
 };
 use rocket_contrib::json::Json;
 use rocket_multipart_form_data::{
     mime, MultipartFormData, MultipartFormDataField, MultipartFormDataOptions, Repetition,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 mod cors;
 mod env;
 mod files;
@@ -33,17 +35,17 @@ fn new_contract_files(
     data: Data,
     person_id: u32,
     contract_id: u32,
-) -> Result<String, Status> {
+) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
     new_contract_files_fn(content_type, data, person_id, contract_id)
 }
 
 const FILES_FORM_FIELD: &str = "files";
 const FILES_JSON_FORM_FIELD: &str = "files_json";
 
-#[derive(Deserialize, Debug)]
-struct NewFile {
-    r#type: String,
-    name: String,
+#[derive(Serialize)]
+struct NewContractsResponse {
+    created: Vec<AnyFile>,
+    errors: Vec<String>,
 }
 
 fn new_contract_files_fn(
@@ -51,7 +53,7 @@ fn new_contract_files_fn(
     data: Data,
     person_id: u32,
     contract_id: u32,
-) -> Result<String, Status> {
+) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
     let fields_config = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
         MultipartFormDataField::file(FILES_FORM_FIELD)
             .content_type_by_string(Some(mime::APPLICATION_PDF))
@@ -72,6 +74,7 @@ fn new_contract_files_fn(
         println!("err: no '{}'", FILES_FORM_FIELD);
         return Err(Status::BadRequest);
     };
+    let files_paths: Vec<PathBuf> = files.iter().map(|ff| ff.path.to_owned()).collect();
 
     let Some(files_json) = multipart_form_data
         .texts
@@ -83,7 +86,6 @@ fn new_contract_files_fn(
         return Err(Status::BadRequest);
     };
 
-    let file_names: Vec<String> = files.iter().map_while(|f| f.file_name.clone()).collect();
     let files_info_vec = match serde_json::from_str::<Vec<NewFile>>(&files_json) {
         Ok(v) => v,
         Err(err) => {
@@ -92,10 +94,29 @@ fn new_contract_files_fn(
         }
     };
 
-    Ok(format!(
-        "file_names: {:?}\nfile_infos_vec: {:?}",
-        file_names, files_info_vec
+    let results = files_info_vec
+        .iter()
+        .map(|file| store_new_file(person_id, contract_id, file, &files_paths));
+
+    // let (created, errors) = results.unzip()
+
+    // Ok(format!(
+    //     "file_names: {:?}\nfile_infos_vec: {:?}",
+    //     file_names, files_info_vec
+    // ));
+
+    // Err(Status {
+    //     code: 207,
+    //     reason: "Partial success. Not all files have been stored",
+    // })
+    Ok(status::Created(
+        "".to_string(),
+        Some(Json(NewContractsResponse {
+            created: vec![],
+            errors: vec![],
+        })),
     ))
+    // Ok("yes".to_string())
 }
 
 #[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]
