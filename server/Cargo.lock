@@ -400,6 +400,7 @@ dependencies = [
 name = "icare_integration_server"
 version = "0.1.0"
 dependencies = [
+ "rand 0.8.5",
  "rocket",
  "rocket-multipart-form-data",
  "rocket_contrib",

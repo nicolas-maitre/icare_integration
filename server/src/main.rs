@@ -98,25 +98,33 @@ fn new_contract_files_fn(
         .iter()
         .map(|file| store_new_file(person_id, contract_id, file, &files_paths));
 
-    // let (created, errors) = results.unzip()
+    let (created, errors): (Vec<Option<AnyFile>>, Vec<Option<String>>) = results
+        .map(|res| match res {
+            Ok(res) => (Some(res), None),
+            Err(err) => (None, Some(err.to_string())),
+        })
+        .unzip();
 
-    // Ok(format!(
-    //     "file_names: {:?}\nfile_infos_vec: {:?}",
-    //     file_names, files_info_vec
-    // ));
+    // let errors = errors.iter().map_while(|e| e.to_owned()).collect();
+    let created: Vec<AnyFile> = created
+        .into_iter()
+        .filter(|c| c.is_some())
+        .map(|c| c.unwrap())
+        .collect();
+    let errors: Vec<String> = errors
+        .into_iter()
+        .filter(|e| e.is_some())
+        .map(|e| e.unwrap())
+        .collect();
 
-    // Err(Status {
-    //     code: 207,
-    //     reason: "Partial success. Not all files have been stored",
-    // })
-    Ok(status::Created(
-        "".to_string(),
-        Some(Json(NewContractsResponse {
-            created: vec![],
-            errors: vec![],
-        })),
-    ))
-    // Ok("yes".to_string())
+    if errors.len() > 0 && created.len() == 0 {
+        Err(Status::NotModified)
+    } else {
+        Ok(status::Created(
+            "".to_string(),
+            Some(Json(NewContractsResponse { created, errors })),
+        ))
+    }
 }
 
 #[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]

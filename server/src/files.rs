@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rand::random;
 use rocket::response::NamedFile;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use urlencoding::encode;
@@ -13,7 +14,7 @@ use crate::env::BASE_FILES_PATH;
 
 pub type FileID = u64;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AnyFile {
     id: FileID,
     name: String,
@@ -68,16 +69,16 @@ impl Serialize for AnyFile {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum FileEnum {
     File(File),
     Folder(Folder),
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 
 struct File {}
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Folder {
     children: Vec<AnyFile>,
 }
@@ -192,6 +193,10 @@ pub fn store_new_file(
     contract_id: u32,
     new_file: &NewFile,
     files_paths: &Vec<PathBuf>,
-) -> Result<(), String> {
-    Ok(())
+) -> Result<AnyFile, String> {
+    if random() {
+        Ok(AnyFile::new_folder(42, "test", "test/test", vec![]))
+    } else {
+        Err("test error".to_string())
+    }
 }
