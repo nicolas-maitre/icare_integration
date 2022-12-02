@@ -1,8 +1,8 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
-use files::{get_file_raw_by_url, get_files_struct, store_new_file, AnyFile, FileID, NewFile};
+use files::{get_file_raw_by_url, get_files_struct, store_new_file, AnyFile, NewFile};
 use rocket::{
     config,
     http::{ContentType, Status},
@@ -29,6 +29,7 @@ fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFi
         Ok(Json(vec![]))
     }
 }
+
 #[post("/people/<person_id>/contracts/<contract_id>/files", data = "<data>")]
 fn new_contract_files(
     content_type: &ContentType,
@@ -41,6 +42,7 @@ fn new_contract_files(
 
 const FILES_FORM_FIELD: &str = "files";
 const FILES_JSON_FORM_FIELD: &str = "files_json";
+const MAX_FILES_SIZE: u64 = 128 * 1024 * 1024; //128 mb
 
 #[derive(Serialize)]
 struct NewContractsResponse {
@@ -56,6 +58,7 @@ fn new_contract_files_fn(
 ) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
     let fields_config = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
         MultipartFormDataField::file(FILES_FORM_FIELD)
+            .size_limit(MAX_FILES_SIZE)
             .content_type_by_string(Some(mime::APPLICATION_PDF))
             .unwrap()
             .repetition(Repetition::infinite()),
@@ -98,28 +101,25 @@ fn new_contract_files_fn(
         .iter()
         .map(|file| store_new_file(person_id, contract_id, file, &files_paths));
 
-    let (created, errors): (Vec<Option<AnyFile>>, Vec<Option<String>>) = results
-        .map(|res| match res {
-            Ok(res) => (Some(res), None),
-            Err(err) => (None, Some(err.to_string())),
-        })
-        .unzip();
+    //handle errors:
+    {
+        let (created, errors): (Vec<Option<AnyFile>>, Vec<Option<String>>) = results
+            .map(|res| match res {
+                Ok(res) => (Some(res), None),
+                Err(err) => (None, Some(err.to_string())),
+            })
+            .unzip();
+        let created: Vec<AnyFile> = created
+            .into_iter()
+            .filter(|c| c.is_some())
+            .map(|c| c.unwrap())
+            .collect();
+        let errors: Vec<String> = errors
+            .into_iter()
+            .filter(|e| e.is_some())
+            .map(|e| e.unwrap())
+            .collect();
 
-    // let errors = errors.iter().map_while(|e| e.to_owned()).collect();
-    let created: Vec<AnyFile> = created
-        .into_iter()
-        .filter(|c| c.is_some())
-        .map(|c| c.unwrap())
-        .collect();
-    let errors: Vec<String> = errors
-        .into_iter()
-        .filter(|e| e.is_some())
-        .map(|e| e.unwrap())
-        .collect();
-
-    if errors.len() > 0 && created.len() == 0 {
-        Err(Status::NotModified)
-    } else {
         Ok(status::Created(
             "".to_string(),
             Some(Json(NewContractsResponse { created, errors })),
