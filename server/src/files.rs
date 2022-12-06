@@ -1,6 +1,6 @@
 use std::{
     collections::hash_map::DefaultHasher,
-    fs::{read_dir, rename},
+    fs::{create_dir_all, read_dir, rename},
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
     time::SystemTime,
@@ -226,6 +226,7 @@ pub fn store_new_file(
     if (file_url.contains("..")).to_owned() {
         return Err("unauthorized".to_string());
     }
+    let folder_path = &get_physical_file_path(person_id, contract_id, new_file.sub_path.to_owned());
     let file_path = &get_physical_file_path(person_id, contract_id, file_url.to_owned());
 
     //1. check if already a file
@@ -246,6 +247,23 @@ pub fn store_new_file(
                 "err move old: \n{:?} \n{:?} \n{}",
                 file_path, move_path, err
             ));
+        }
+    }
+
+    //2.5 create dir if not exists
+    // folder_path
+    let folder_exists = match folder_path.try_exists() {
+        Ok(e) => e,
+        Err(err) => {
+            return Err(format!(
+                "err folder exist check: \n{:?} \n{}",
+                folder_path, err
+            ))
+        }
+    };
+    if !folder_exists {
+        if let Err(err) = create_dir_all(folder_path) {
+            return Err(format!("err folder creation \n{:?}\n{}", folder_path, err));
         }
     }
 
