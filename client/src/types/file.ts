@@ -33,3 +33,11 @@ export function getFileType(file: AnyFile) {
     ? fileNameParts.at(-1)
     : undefined;
 }
+
+export interface NewFile {
+  type: "file";
+  name: string;
+  sub_path: string;
+  data_index?: number;
+  file_data: FileSystemFileEntry | undefined;
+}

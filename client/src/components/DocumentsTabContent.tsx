@@ -4,14 +4,17 @@ import styled from "styled-components";
 import {
   QueryClient,
   QueryClientProvider,
+  useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
-import { AnyFile, ZodAnyFile } from "../types/file";
+import { AnyFile, NewFile, ZodAnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
 import { z } from "zod";
 import { FilePreviewer } from "./FilePreviewer";
 import { API_URL } from "../env";
+import { fileEntriesToNewFiles } from "../helpers/files";
 
 const queryClient = new QueryClient();
 export function DocumentsTabContent(props: DocumentsTabContentProps) {
@@ -39,6 +42,60 @@ function useContractFiles(personId: number, contractId: number) {
   );
 }
 
+function useUploadContractFiles(personId: number, contractId: number) {
+  const queryClient = useQueryClient();
+  return useMutation(
+    async ({ newFiles }: { newFiles: NewFile[] }) => {
+      const body = new FormData();
+      body.append(
+        "files_json",
+        JSON.stringify(
+          newFiles.map((file, index) => ({
+            ...file,
+            file_data: undefined,
+            data_index: index,
+          }))
+        )
+      );
+      const fileFiles = await Promise.all(
+        newFiles.map(
+          (file) =>
+            new Promise<File>((res, rej) => {
+              if (!file.file_data) rej();
+              else file.file_data?.file(res, rej);
+            })
+        )
+      );
+      fileFiles.forEach((file) => {
+        body.append("files", file);
+      });
+
+      console.log("body", body);
+
+      const res = await fetch(
+        `${API_URL}/people/${personId}/contracts/${contractId}/files`,
+        {
+          method: "POST",
+          body,
+        }
+      );
+
+      if (!res.ok) {
+        alert("Une erreur s'est produite durant l'envoi des fichiers");
+      }
+    },
+    {
+      onSettled() {
+        queryClient.invalidateQueries([
+          "personContractFiles",
+          personId,
+          contractId,
+        ]);
+      },
+    }
+  );
+}
+
 interface DocumentsTabContentProps {
   personId: number;
   contractId: number;
@@ -52,6 +109,10 @@ export function DocumentsTabContentContent({
     isLoading,
     isError,
   } = useContractFiles(personId, contractId);
+  const { mutate: triggerFileUpload } = useUploadContractFiles(
+    personId,
+    contractId
+  );
   const filesPanelRef = useRef<HTMLDivElement>(null);
   const [selectedFile, setSelectedFile] = useState<AnyFile | undefined>();
   return (
@@ -60,13 +121,35 @@ export function DocumentsTabContentContent({
         <ScFilesPanel
           ref={filesPanelRef}
           onClick={() => setSelectedFile(undefined)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const items = [...e.dataTransfer.items].flatMap((item) => {
+              const itemEntry = item.webkitGetAsEntry();
+              return itemEntry ? [itemEntry] : [];
+            });
+            const newFiles = fileEntriesToNewFiles(items);
+            console.log(items, newFiles);
+            if (
+              !confirm(`Êtes vous sûr de vouloir envoyer le(s) fichier(s) ?`)
+            ) {
+              return;
+            }
+            triggerFileUpload({ newFiles });
+          }}
         >
+          <input
+            type="file"
+            multiple
+            // webkitdirectory="true"
+            onChange={(e) => console.log(e.currentTarget.files)}
+          />
           {isLoading ? (
             "Chargement..."
           ) : isError ? (
             "Une erreur s'est produite..."
           ) : !files?.length ? (
-            "Aucuns fichiers."
+            "Aucun fichier."
           ) : (
             <FileList
               files={files ?? []}
