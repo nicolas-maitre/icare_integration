@@ -122,7 +122,15 @@ fn get_physical_contract_files_history_root(person_id: u32, contract_id: u32) ->
 }
 
 fn get_physical_file_path(person_id: u32, contract_id: u32, url: String) -> PathBuf {
-    get_physical_contract_files_root(person_id, contract_id).join(url)
+    let mut clean_url = url;
+    for _ in 0..clean_url.len() {
+        let char = clean_url.chars().next().unwrap();
+        if char != '/' && char != '\\' {
+            break;
+        }
+        clean_url.remove(0);
+    }
+    get_physical_contract_files_root(person_id, contract_id).join(clean_url)
 }
 
 fn get_sub_files(
@@ -235,13 +243,33 @@ pub fn store_new_file(
         Err(err) => return Err(format!("err exist check: \n{:?} \n{}", file_path, err)),
     };
 
+    println!("already_exists {} {:?}", already_exists, file_path);
+
     //2. move old file to history
     if already_exists {
-        let move_path = &get_physical_contract_files_history_root(person_id, contract_id).join(
+        let files_history_root = &get_physical_contract_files_history_root(person_id, contract_id);
+        let move_path = &files_history_root.join(
             [format!("{}-{}", get_fmt_time(), file_name)]
                 .iter()
                 .collect::<PathBuf>(),
         );
+        let history_folder_exists = match files_history_root.try_exists() {
+            Ok(e) => e,
+            Err(err) => {
+                return Err(format!(
+                    "err history folder exist check: \n{:?} \n{}",
+                    files_history_root, err
+                ))
+            }
+        };
+        if !history_folder_exists {
+            if let Err(err) = create_dir_all(files_history_root) {
+                return Err(format!(
+                    "err history folder creation \n{:?}\n{}",
+                    files_history_root, err
+                ));
+            }
+        }
         if let Err(err) = rename(file_path, move_path) {
             return Err(format!(
                 "err move old: \n{:?} \n{:?} \n{}",
