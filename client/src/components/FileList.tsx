@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CSSProperties, useState } from "react";
 import styled from "styled-components";
+import { getDownloadLink } from "../helpers/files";
 import { AnyFile, getFileType } from "../types/file";
 
 export interface FileListProps {
@@ -81,6 +82,11 @@ function FileLine({
           evt.stopPropagation();
           setIsOpen(true);
           onSelect?.(file);
+        }}
+        onDoubleClick={(evt) => {
+          if (file.type == "file") {
+            window.open(getDownloadLink(file), "_blank"); //?.focus();
+          }
         }}
       >
         <i className={`type-icon fa fa-${iconClassPostfix}`} />

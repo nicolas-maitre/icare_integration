@@ -117,11 +117,12 @@ try {
       if (!reactRoot) reactRoot = reactDOMCreateRoot(docTabContentDiv);
 
       //query person id and contract id from title
-      const [, personId, contractId] =
+      const [personId, contractId] =
         titleElement?.textContent
           ?.trim()
           .split("-")
-          .map((i) => parseInt(i)) ?? [];
+          .map((i) => parseInt(i))
+          .slice(-2) ?? [];
 
       reactRoot.render(
         reactCreateElement(

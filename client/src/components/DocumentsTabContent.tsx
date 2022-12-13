@@ -138,12 +138,6 @@ export function DocumentsTabContentContent({
             triggerFileUpload({ newFiles });
           }}
         >
-          <input
-            type="file"
-            multiple
-            // webkitdirectory="true"
-            onChange={(e) => console.log(e.currentTarget.files)}
-          />
           {isLoading ? (
             "Chargement..."
           ) : isError ? (

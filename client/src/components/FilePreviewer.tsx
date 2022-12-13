@@ -1,6 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
-import { API_URL } from "../env";
+import { getDownloadLink } from "../helpers/files";
 import { AnyFile, getFileType } from "../types/file";
 
 interface FilePreviewerProps {
@@ -12,10 +12,12 @@ export function FilePreviewer({ file }: FilePreviewerProps) {
   }
 
   const fileType = getFileType(file);
-  const downloadLink = `${API_URL}${file.url}`;
+  const downloadLink = getDownloadLink(file);
   switch (fileType) {
     case "txt":
     case "pdf":
+    case "jpg":
+    case "png":
       return <ScPreviewIframe src={downloadLink} />;
 
     default:

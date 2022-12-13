@@ -1,4 +1,5 @@
-import { NewFile } from "../types/file";
+import { API_URL } from "../env";
+import { File, NewFile } from "../types/file";
 
 export function fileEntriesToNewFiles(entries: FileSystemEntry[]): NewFile[] {
   return entries.flatMap((entry) => {
@@ -20,4 +21,8 @@ export function fileEntriesToNewFiles(entries: FileSystemEntry[]): NewFile[] {
     }
     throw new Error("unknown file type");
   });
+}
+
+export function getDownloadLink(file: File) {
+  return `${API_URL}${file.url}`;
 }

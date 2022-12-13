@@ -59,8 +59,8 @@ fn new_contract_files_fn(
     let fields_config = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
         MultipartFormDataField::file(FILES_FORM_FIELD)
             .size_limit(MAX_FILES_SIZE)
-            .content_type_by_string(Some(mime::APPLICATION_PDF))
-            .unwrap()
+            // .content_type_by_string(Some(mime::APPLICATION_PDF))
+            // .unwrap()
             .repetition(Repetition::infinite()),
         MultipartFormDataField::text(FILES_JSON_FORM_FIELD),
     ]);
