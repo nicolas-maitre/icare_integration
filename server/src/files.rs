@@ -249,9 +249,12 @@ pub fn store_new_file(
     if already_exists {
         let files_history_root = &get_physical_contract_files_history_root(person_id, contract_id);
         let move_path = &files_history_root.join(
-            [format!("{}-{}", get_fmt_time(), file_name)]
-                .iter()
-                .collect::<PathBuf>(),
+            [
+                new_file.sub_path.to_owned(),
+                format!("{}-{}", get_fmt_time(), file_name),
+            ]
+            .iter()
+            .collect::<PathBuf>(),
         );
         let history_folder_exists = match files_history_root.try_exists() {
             Ok(e) => e,

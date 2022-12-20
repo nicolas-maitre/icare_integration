@@ -11,7 +11,7 @@ use rocket::{
 };
 use rocket_contrib::json::Json;
 use rocket_multipart_form_data::{
-    mime, MultipartFormData, MultipartFormDataField, MultipartFormDataOptions, Repetition,
+    MultipartFormData, MultipartFormDataField, MultipartFormDataOptions, Repetition,
 };
 use serde::Serialize;
 mod cors;
