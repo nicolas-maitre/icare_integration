@@ -30,6 +30,9 @@ fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFi
     }
 }
 
+#[get("/people/<person_id>/files")]
+fn get_person_files(person_id: u32) {}
+
 #[post("/people/<person_id>/contracts/<contract_id>/files", data = "<data>")]
 fn new_contract_files(
     content_type: &ContentType,
@@ -127,6 +130,7 @@ fn new_contract_files_fn(
     }
 }
 
+//could directly get a pathBuffer from url
 #[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]
 fn get_contract_file_raw_by_url(
     person_id: u32,
@@ -144,6 +148,8 @@ fn main() {
     let rocket_cfg = Config::build(config::Environment::Development)
         .address("127.0.0.1")
         .unwrap();
+
+    println!("using file root: {}", env::BASE_FILES_PATH);
 
     rocket::custom(rocket_cfg)
         .attach(cors::CORS)

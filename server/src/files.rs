@@ -87,8 +87,7 @@ struct Folder {
 
 pub fn get_files_struct(person_id: u32, contract_id: u32) -> Option<Vec<AnyFile>> {
     get_sub_files(
-        person_id,
-        contract_id,
+        get_base_file_url(person_id, contract_id),
         &get_physical_contract_files_root(person_id, contract_id),
         &PathBuf::new(),
     )
@@ -132,10 +131,11 @@ fn get_physical_file_path(person_id: u32, contract_id: u32, url: String) -> Path
     }
     get_physical_contract_files_root(person_id, contract_id).join(clean_url)
 }
-
+fn get_base_file_url(person_id: u32, contract_id: u32) -> String {
+    format!("/people/{}/contracts/{}/files_url/", person_id, contract_id)
+}
 fn get_sub_files(
-    person_id: u32,
-    contract_id: u32,
+    base_file_url: String,
     files_root: &PathBuf,
     path: &PathBuf,
 ) -> Option<Vec<AnyFile>> {
@@ -162,12 +162,7 @@ fn get_sub_files(
                 };
 
                 // "/people/<person_id>/contracts/<contract_id>/file_urls/<file_url>"
-                let url = format!(
-                    "/people/{}/contracts/{}/files_url/{}",
-                    person_id,
-                    contract_id,
-                    encode(file_path_str)
-                );
+                let url = format!("{}{}", base_file_url, encode(file_path_str));
 
                 let mut hasher = DefaultHasher::new();
                 url.hash(&mut hasher);
@@ -182,7 +177,7 @@ fn get_sub_files(
                 }
                 if file_type.is_dir() {
                     if let Some(sub_files) =
-                        get_sub_files(person_id, contract_id, files_root, &file_path)
+                        get_sub_files(base_file_url.clone(), files_root, &file_path)
                     {
                         return Some(AnyFile::new_folder(id, name, url, sub_files));
                     }
