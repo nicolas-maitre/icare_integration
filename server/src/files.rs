@@ -1,6 +1,6 @@
 use std::{
     collections::hash_map::DefaultHasher,
-    fs::{create_dir_all, read_dir, rename},
+    fs::{copy, create_dir_all, read_dir, rename},
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
     time::SystemTime,
@@ -238,10 +238,9 @@ pub fn store_new_file(
         Err(err) => return Err(format!("err exist check: \n{:?} \n{}", file_path, err)),
     };
 
-    println!("already_exists {} {:?}", already_exists, file_path);
-
     //2. move old file to history
     if already_exists {
+        println!("already_exists {:?}", file_path);
         let files_history_root = &get_physical_contract_files_history_root(person_id, contract_id);
         let move_path = &files_history_root.join(
             [
@@ -293,10 +292,11 @@ pub fn store_new_file(
         }
     }
 
-    //3. move new file to real location
-    if let Err(err) = rename(new_file_source_path, file_path) {
+    //3. copy new file to real location (from temp directory). 
+    //Can't use rename because of filesystem limitations.
+    if let Err(err) = copy(new_file_source_path, file_path) {
         return Err(format!(
-            "err move new: \n{:?} \n{:?} \n{}",
+            "err copy new: \n{:?} \n{:?} \n{}",
             new_file_source_path, file_path, err
         ));
     }
