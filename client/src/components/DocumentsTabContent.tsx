@@ -98,20 +98,20 @@ function useUploadContractFiles(personId: number, contractId: number) {
 
 interface DocumentsTabContentProps {
   personId: number;
-  contractId: number;
+  contractNumber: number;
 }
 export function DocumentsTabContentContent({
   personId,
-  contractId,
+  contractNumber,
 }: DocumentsTabContentProps) {
   const {
     data: files,
     isLoading,
     isError,
-  } = useContractFiles(personId, contractId);
+  } = useContractFiles(personId, contractNumber);
   const { mutate: triggerFileUpload } = useUploadContractFiles(
     personId,
-    contractId
+    contractNumber
   );
   const filesPanelRef = useRef<HTMLDivElement>(null);
   const [selectedFile, setSelectedFile] = useState<AnyFile | undefined>();
