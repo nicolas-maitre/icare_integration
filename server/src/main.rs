@@ -23,6 +23,7 @@ extern crate rocket;
 
 #[get("/people/<person_id>/contracts/<contract_id>/files")]
 fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
+    println!("handle!!!");
     if let Some(res) = get_files_struct(person_id, contract_id) {
         Ok(Json(res))
     } else {
@@ -31,16 +32,21 @@ fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFi
 }
 
 #[get("/people/<person_id>/files")]
-fn get_person_files(person_id: u32) {}
+fn get_person_files(person_id: u32) {
+    todo!("not implemented");
+}
 
-#[post("/people/<person_id>/contracts/<contract_id>/files", data = "<data>")]
+#[post(
+    "/people/<person_id>/contracts/<contract_number>/files",
+    data = "<data>"
+)]
 fn new_contract_files(
     content_type: &ContentType,
     data: Data,
     person_id: u32,
-    contract_id: u32,
+    contract_number: u32,
 ) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
-    new_contract_files_fn(content_type, data, person_id, contract_id)
+    new_contract_files_fn(content_type, data, person_id, contract_number)
 }
 
 const FILES_FORM_FIELD: &str = "files";
@@ -144,6 +150,9 @@ fn get_contract_file_raw_by_url(
     }
 }
 
+#[get("/people/<parent_id>/family_files")]
+fn get_family_files(parent_id: u32) {}
+
 fn main() {
     let rocket_cfg = Config::build(config::Environment::Development)
         .address("127.0.0.1")
@@ -158,7 +167,8 @@ fn main() {
             routes![
                 get_contract_files,
                 get_contract_file_raw_by_url,
-                new_contract_files
+                new_contract_files,
+                get_family_files,
             ],
         )
         .launch();

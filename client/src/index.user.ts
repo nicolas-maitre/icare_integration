@@ -16,9 +16,15 @@ import { createElement as reactCreateElement, StrictMode } from "react";
 import { DocumentsTabContent } from "./components/DocumentsTabContent";
 import { createElem, e, waitForSelector } from "./helpers/elements";
 import { urlCheck } from "./helpers/url";
+import { getFamilyTreeData } from "./helpers/icare";
 
 try {
   await (async () => {
+    //TODO remove this test
+    getFamilyTreeData(110374).then((treeData) => console.log(treeData));
+
+    //Add GED button to top menu
+
     //Check for contract page
     if (
       !urlCheck([
@@ -118,7 +124,7 @@ try {
       if (!reactRoot) reactRoot = reactDOMCreateRoot(docTabContentDiv);
 
       //query person id and contract id from title
-      const [personId, contractId] =
+      const [personId, contractNumber] =
         titleElement?.textContent
           ?.trim()
           .split("-")
@@ -129,7 +135,7 @@ try {
         reactCreateElement(
           StrictMode,
           null,
-          reactCreateElement(DocumentsTabContent, { personId, contractId })
+          reactCreateElement(DocumentsTabContent, { personId, contractNumber })
         )
       );
     }

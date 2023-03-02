@@ -140,9 +140,14 @@ fn get_sub_files(
     path: &PathBuf,
 ) -> Option<Vec<AnyFile>> {
     let physical_path = Path::new(files_root).join(path);
-    let Ok(res) = read_dir(physical_path) else{
+    println!("physical_path {:?}", physical_path.clone());
+    let res_dir = match read_dir(physical_path.clone()) {
+        //TODO: write code hee cuz it's broken
+    }
+    let Ok(res) = read_dir(physical_path.clone()) else{
       return None;
     };
+    println!("OK {:?}", physical_path.clone());
     let sub_files = res
         .map_while({
             |file| {
@@ -218,16 +223,16 @@ pub fn store_new_file(
         return Err(format!("can only add file, not {}", new_file.r#type));
     }
     let Some(new_file_data_index) = new_file.data_index else{
-        return Err("missing data index".to_string());
+        return Err("missing data index".to_owned());
     };
     let Some(new_file_source_path) = files_paths.get(new_file_data_index as usize) else{
-        return Err("missing data".to_string());
+        return Err("missing data".to_owned());
     };
 
     let file_name = new_file.name.to_owned();
     let file_url = &format!("{}/{}", new_file.sub_path, file_name);
-    if (file_url.contains("..")).to_owned() {
-        return Err("unauthorized".to_string());
+    if file_url.contains("..") {
+        return Err("unauthorized".to_owned());
     }
     let folder_path = &get_physical_file_path(person_id, contract_id, new_file.sub_path.to_owned());
     let file_path = &get_physical_file_path(person_id, contract_id, file_url.to_owned());
@@ -292,7 +297,7 @@ pub fn store_new_file(
         }
     }
 
-    //3. copy new file to real location (from temp directory). 
+    //3. copy new file to real location (from temp directory).
     //Can't use rename because of filesystem limitations.
     if let Err(err) = copy(new_file_source_path, file_path) {
         return Err(format!(
