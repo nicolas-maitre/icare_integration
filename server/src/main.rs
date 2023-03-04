@@ -2,7 +2,10 @@
 
 use std::path::PathBuf;
 
-use files::{get_file_raw_by_url, get_files_struct, store_new_file, AnyFile, NewFile};
+use files::{
+    get_contract_files_struct, get_family_files_struct, get_physical_contract_root,
+    get_physical_family_root, store_new_file, AnyFile, NewFile, PhysicalRoot,
+};
 use rocket::{
     config,
     http::{ContentType, Status},
@@ -23,17 +26,25 @@ extern crate rocket;
 
 #[get("/people/<person_id>/contracts/<contract_id>/files")]
 fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
-    println!("handle!!!");
-    if let Some(res) = get_files_struct(person_id, contract_id) {
+    if let Some(res) = get_contract_files_struct(person_id, contract_id) {
         Ok(Json(res))
     } else {
         Ok(Json(vec![]))
     }
 }
 
-#[get("/people/<person_id>/files")]
-fn get_person_files(person_id: u32) {
-    todo!("not implemented");
+// #[get("/people/<person_id>/files")]
+// fn get_person_files(person_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
+//     todo!("not implemented");
+// }
+
+#[get("/people/<parent_id>/family/files")]
+fn get_family_files(parent_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
+    if let Some(res) = get_family_files_struct(parent_id) {
+        Ok(Json(res))
+    } else {
+        Ok(Json(vec![]))
+    }
 }
 
 #[post(
@@ -45,8 +56,21 @@ fn new_contract_files(
     data: Data,
     person_id: u32,
     contract_number: u32,
-) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
-    new_contract_files_fn(content_type, data, person_id, contract_number)
+) -> Result<status::Created<Json<NewFilesResponse>>, Status> {
+    handle_file_upload(
+        get_physical_contract_root(person_id, contract_number),
+        content_type,
+        data,
+    )
+}
+
+#[post("/people/<parent_id>/family/files", data = "<data>")]
+fn new_family_files(
+    content_type: &ContentType,
+    data: Data,
+    parent_id: u32,
+) -> Result<status::Created<Json<NewFilesResponse>>, Status> {
+    handle_file_upload(get_physical_family_root(parent_id), content_type, data)
 }
 
 const FILES_FORM_FIELD: &str = "files";
@@ -54,17 +78,17 @@ const FILES_JSON_FORM_FIELD: &str = "files_json";
 const MAX_FILES_SIZE: u64 = 128 * 1024 * 1024; //128 mb
 
 #[derive(Serialize)]
-struct NewContractsResponse {
-    created: Vec<AnyFile>,
+struct NewFilesResponse {
+    // created: Vec<>,
+    created_count: usize,
     errors: Vec<String>,
 }
 
-fn new_contract_files_fn(
+fn handle_file_upload(
+    physical_root: PhysicalRoot,
     content_type: &ContentType,
     data: Data,
-    person_id: u32,
-    contract_id: u32,
-) -> Result<status::Created<Json<NewContractsResponse>>, Status> {
+) -> Result<status::Created<Json<NewFilesResponse>>, Status> {
     let fields_config = MultipartFormDataOptions::with_multipart_form_data_fields(vec![
         MultipartFormDataField::file(FILES_FORM_FIELD)
             .size_limit(MAX_FILES_SIZE)
@@ -108,21 +132,19 @@ fn new_contract_files_fn(
 
     let results = files_info_vec
         .iter()
-        .map(|file| store_new_file(person_id, contract_id, file, &files_paths));
+        .map(|file| store_new_file(physical_root.to_owned(), file, &files_paths));
 
     //handle errors:
     {
-        let (created, errors): (Vec<Option<AnyFile>>, Vec<Option<String>>) = results
+        let (created, errors): (Vec<Option<()>>, Vec<Option<String>>) = results
             .map(|res| match res {
                 Ok(res) => (Some(res), None),
                 Err(err) => (None, Some(err.to_string())),
             })
             .unzip();
-        let created: Vec<AnyFile> = created
-            .into_iter()
-            .filter(|c| c.is_some())
-            .map(|c| c.unwrap())
-            .collect();
+
+        let created_count = created.into_iter().filter(|c| c.is_some()).count();
+
         let errors: Vec<String> = errors
             .into_iter()
             .filter(|e| e.is_some())
@@ -131,7 +153,10 @@ fn new_contract_files_fn(
 
         Ok(status::Created(
             "".to_string(),
-            Some(Json(NewContractsResponse { created, errors })),
+            Some(Json(NewFilesResponse {
+                errors,
+                created_count,
+            })),
         ))
     }
 }
@@ -143,15 +168,21 @@ fn get_contract_file_raw_by_url(
     contract_id: u32,
     files_url: String,
 ) -> Result<NamedFile, Status> {
-    if let Ok(res) = get_file_raw_by_url(person_id, contract_id, files_url) {
+    if let Ok(res) = files::get_contract_file_raw_by_url(person_id, contract_id, files_url) {
         Ok(res)
     } else {
         Err(Status::NotFound)
     }
 }
-
-#[get("/people/<parent_id>/family_files")]
-fn get_family_files(parent_id: u32) {}
+//could directly get a pathBuffer from url
+#[get("/people/<parent_id>/family/files_url/<files_url>")]
+fn get_family_file_raw_by_url(parent_id: u32, files_url: String) -> Result<NamedFile, Status> {
+    if let Ok(res) = files::get_family_file_raw_by_url(parent_id, files_url) {
+        Ok(res)
+    } else {
+        Err(Status::NotFound)
+    }
+}
 
 fn main() {
     let rocket_cfg = Config::build(config::Environment::Development)
@@ -165,10 +196,14 @@ fn main() {
         .mount(
             "/",
             routes![
+                //contract
                 get_contract_files,
                 get_contract_file_raw_by_url,
                 new_contract_files,
+                //family
                 get_family_files,
+                get_family_file_raw_by_url,
+                new_family_files
             ],
         )
         .launch();

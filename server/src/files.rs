@@ -85,55 +85,80 @@ struct Folder {
     children: Vec<AnyFile>,
 }
 
-pub fn get_files_struct(person_id: u32, contract_id: u32) -> Option<Vec<AnyFile>> {
+pub fn get_contract_files_struct(person_id: u32, contract_number: u32) -> Option<Vec<AnyFile>> {
     get_sub_files(
-        get_base_file_url(person_id, contract_id),
-        &get_physical_contract_files_root(person_id, contract_id),
+        get_base_contract_files_url(person_id, contract_number),
+        &get_physical_contract_root(person_id, contract_number).files,
+        &PathBuf::new(),
+    )
+}
+pub fn get_family_files_struct(parent_id: u32) -> Option<Vec<AnyFile>> {
+    get_sub_files(
+        get_base_family_files_url(parent_id),
+        &get_physical_family_root(parent_id).files,
         &PathBuf::new(),
     )
 }
 
-fn get_physical_contract_files_root(person_id: u32, contract_id: u32) -> PathBuf {
-    Path::new(BASE_FILES_PATH).join(
-        [
-            "people",
-            &person_id.to_string(),
-            "contracts",
-            &contract_id.to_string(),
-            "files",
-        ]
-        .iter()
-        .collect::<PathBuf>(),
-    )
+#[derive(Clone)]
+pub struct PhysicalRoot {
+    files: PathBuf,
+    history: PathBuf,
 }
-fn get_physical_contract_files_history_root(person_id: u32, contract_id: u32) -> PathBuf {
-    Path::new(BASE_FILES_PATH).join(
-        [
-            "people",
-            &person_id.to_string(),
-            "contracts",
-            &contract_id.to_string(),
-            "files_history",
-        ]
-        .iter()
-        .collect::<PathBuf>(),
-    )
+impl PhysicalRoot {
+    fn from_base_root(base_root: PathBuf) -> Self {
+        Self {
+            files: base_root.join("files"),
+            history: base_root.join("files_history"),
+        }
+    }
 }
 
-fn get_physical_file_path(person_id: u32, contract_id: u32, url: String) -> PathBuf {
+pub fn get_physical_contract_root(person_id: u32, contract_number: u32) -> PhysicalRoot {
+    let base_root = Path::new(BASE_FILES_PATH).join(
+        [
+            "people",
+            &person_id.to_string(),
+            "contracts",
+            &contract_number.to_string(),
+        ]
+        .iter()
+        .collect::<PathBuf>(),
+    );
+    PhysicalRoot::from_base_root(base_root)
+}
+
+pub fn get_physical_family_root(parent_id: u32) -> PhysicalRoot {
+    let base_root = Path::new(BASE_FILES_PATH).join(
+        ["people", &parent_id.to_string(), "family"]
+            .iter()
+            .collect::<PathBuf>(),
+    );
+    PhysicalRoot::from_base_root(base_root)
+}
+fn get_physical_file_path(physical_files_root: PathBuf, url: String) -> PathBuf {
     let mut clean_url = url;
     for _ in 0..clean_url.len() {
         let char = clean_url.chars().next().unwrap();
+        //remove leading / or \
         if char != '/' && char != '\\' {
             break;
         }
         clean_url.remove(0);
     }
-    get_physical_contract_files_root(person_id, contract_id).join(clean_url)
+    physical_files_root.join(clean_url)
 }
-fn get_base_file_url(person_id: u32, contract_id: u32) -> String {
-    format!("/people/{}/contracts/{}/files_url/", person_id, contract_id)
+
+fn get_base_contract_files_url(person_id: u32, contract_number: u32) -> String {
+    format!(
+        "/people/{}/contracts/{}/files_url/",
+        person_id, contract_number
+    )
 }
+fn get_base_family_files_url(parent_id: u32) -> String {
+    format!("/people/{}/family/files_url/", parent_id)
+}
+
 fn get_sub_files(
     base_file_url: String,
     files_root: &PathBuf,
@@ -142,13 +167,14 @@ fn get_sub_files(
     let physical_path = Path::new(files_root).join(path);
     println!("physical_path {:?}", physical_path.clone());
     let res_dir = match read_dir(physical_path.clone()) {
-        //TODO: write code hee cuz it's broken
-    }
-    let Ok(res) = read_dir(physical_path.clone()) else{
-      return None;
+        Ok(res) => res,
+        Err(err) => {
+            println!("read dir error: {}", err);
+            return None;
+        }
     };
-    println!("OK {:?}", physical_path.clone());
-    let sub_files = res
+
+    let sub_files = res_dir
         .map_while({
             |file| {
                 let Ok(file) = file else{
@@ -166,7 +192,7 @@ fn get_sub_files(
                     return None;
                 };
 
-                // "/people/<person_id>/contracts/<contract_id>/file_urls/<file_url>"
+                // "/people/<person_id>/contracts/<contract_number>/file_urls/<file_url>"
                 let url = format!("{}{}", base_file_url, encode(file_path_str));
 
                 let mut hasher = DefaultHasher::new();
@@ -195,12 +221,23 @@ fn get_sub_files(
     return Some(sub_files);
 }
 
-pub fn get_file_raw_by_url(
+pub fn get_contract_file_raw_by_url(
     person_id: u32,
-    contract_id: u32,
+    contract_number: u32,
     url: String,
 ) -> Result<NamedFile, std::io::Error> {
-    let path = get_physical_file_path(person_id, contract_id, url);
+    let path = get_physical_file_path(
+        get_physical_contract_root(person_id, contract_number).files,
+        url,
+    );
+    NamedFile::open(path)
+}
+
+pub fn get_family_file_raw_by_url(
+    parent_id: u32,
+    url: String,
+) -> Result<NamedFile, std::io::Error> {
+    let path = get_physical_file_path(get_physical_family_root(parent_id).files, url);
     NamedFile::open(path)
 }
 
@@ -213,11 +250,10 @@ pub struct NewFile {
 }
 
 pub fn store_new_file(
-    person_id: u32,
-    contract_id: u32,
+    physical_root: PhysicalRoot,
     new_file: &NewFile,
     files_paths: &Vec<PathBuf>,
-) -> Result<AnyFile, String> {
+) -> Result<(), String> {
     //check if new file has data
     if new_file.r#type != "file" {
         return Err(format!("can only add file, not {}", new_file.r#type));
@@ -234,8 +270,11 @@ pub fn store_new_file(
     if file_url.contains("..") {
         return Err("unauthorized".to_owned());
     }
-    let folder_path = &get_physical_file_path(person_id, contract_id, new_file.sub_path.to_owned());
-    let file_path = &get_physical_file_path(person_id, contract_id, file_url.to_owned());
+
+    let physical_files_root = physical_root.files;
+    let folder_path =
+        &get_physical_file_path(physical_files_root.to_owned(), new_file.sub_path.to_owned());
+    let file_path = &get_physical_file_path(physical_files_root, file_url.to_owned());
 
     //1. check if already a file
     let already_exists = match file_path.try_exists() {
@@ -245,9 +284,10 @@ pub fn store_new_file(
 
     //2. move old file to history
     if already_exists {
+        let physical_file_history_root = physical_root.history;
         println!("already_exists {:?}", file_path);
-        let files_history_root = &get_physical_contract_files_history_root(person_id, contract_id);
-        let move_path = &files_history_root.join(
+
+        let move_path = &physical_file_history_root.join(
             [
                 new_file.sub_path.to_owned(),
                 format!("{}-{}", get_fmt_time(), file_name),
@@ -255,23 +295,25 @@ pub fn store_new_file(
             .iter()
             .collect::<PathBuf>(),
         );
-        let history_folder_exists = match files_history_root.try_exists() {
+        let history_folder_exists = match physical_file_history_root.try_exists() {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
                     "err history folder exist check: \n{:?} \n{}",
-                    files_history_root, err
+                    physical_file_history_root, err
                 ))
             }
         };
+        //TODO: This only works for base-level files and not for deep files
         if !history_folder_exists {
-            if let Err(err) = create_dir_all(files_history_root) {
+            if let Err(err) = create_dir_all(physical_file_history_root.to_owned()) {
                 return Err(format!(
                     "err history folder creation \n{:?}\n{}",
-                    files_history_root, err
+                    physical_file_history_root, err
                 ));
             }
         }
+        println!("move from {:?} to {:?}", file_path, move_path);
         if let Err(err) = rename(file_path, move_path) {
             return Err(format!(
                 "err move old: \n{:?} \n{:?} \n{}",
@@ -306,17 +348,19 @@ pub fn store_new_file(
         ));
     }
 
+    Ok(())
+
     //4. return dummy AnyFile
-    let url = format!(
-        "/people/{}/contracts/{}/files_url/{}",
-        person_id,
-        contract_id,
-        encode(&file_url)
-    );
-    let mut hasher = DefaultHasher::new();
-    url.hash(&mut hasher);
-    let id = hasher.finish();
-    return Ok(AnyFile::new_file(id, file_name, url));
+    // let url = format!(
+    //     "/people/{}/contracts/{}/files_url/{}",
+    //     person_id,
+    //     contract_number,
+    //     encode(&file_url)
+    // );
+    // let mut hasher = DefaultHasher::new();
+    // url.hash(&mut hasher);
+    // let id = hasher.finish();
+    // return Ok(AnyFile::new_file(id, file_name, url));
 }
 
 const DATE_FORMAT_STR: &'static str = "[year]-[month]-[day]-[hour]-[minute]-[second]";
