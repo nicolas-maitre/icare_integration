@@ -3,8 +3,9 @@
 use std::path::PathBuf;
 
 use files::{
-    get_contract_files_struct, get_family_files_struct, get_physical_contract_root,
-    get_physical_family_root, store_new_file, AnyFile, NewFile, PhysicalRoot,
+    get_contract_files_struct, get_family_files_struct, get_person_files_struct,
+    get_physical_contract_root, get_physical_family_root, get_physical_file_path,
+    get_physical_person_root, store_new_file, AnyFile, NewFile, PhysicalRoot,
 };
 use rocket::{
     config,
@@ -33,10 +34,14 @@ fn get_contract_files(person_id: u32, contract_id: u32) -> Result<Json<Vec<AnyFi
     }
 }
 
-// #[get("/people/<person_id>/files")]
-// fn get_person_files(person_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
-//     todo!("not implemented");
-// }
+#[get("/people/<person_id>/files")]
+fn get_person_files(person_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
+    if let Some(res) = get_person_files_struct(person_id) {
+        Ok(Json(res))
+    } else {
+        Ok(Json(vec![]))
+    }
+}
 
 #[get("/people/<parent_id>/family/files")]
 fn get_family_files(parent_id: u32) -> Result<Json<Vec<AnyFile>>, Status> {
@@ -62,6 +67,15 @@ fn new_contract_files(
         content_type,
         data,
     )
+}
+
+#[post("/people/<person_id>/files", data = "<data>")]
+fn new_person_files(
+    content_type: &ContentType,
+    data: Data,
+    person_id: u32,
+) -> Result<status::Created<Json<NewFilesResponse>>, Status> {
+    handle_file_upload(get_physical_person_root(person_id), content_type, data)
 }
 
 #[post("/people/<parent_id>/family/files", data = "<data>")]
@@ -162,22 +176,39 @@ fn handle_file_upload(
 }
 
 //could directly get a pathBuffer from url
-#[get("/people/<person_id>/contracts/<contract_id>/files_url/<files_url>")]
+#[get("/people/<person_id>/contracts/<contract_number>/files_url/<files_url>")]
 fn get_contract_file_raw_by_url(
     person_id: u32,
-    contract_id: u32,
+    contract_number: u32,
     files_url: String,
 ) -> Result<NamedFile, Status> {
-    if let Ok(res) = files::get_contract_file_raw_by_url(person_id, contract_id, files_url) {
+    let path = get_physical_file_path(
+        get_physical_contract_root(person_id, contract_number).files,
+        files_url,
+    );
+    if let Ok(res) = NamedFile::open(path) {
         Ok(res)
     } else {
         Err(Status::NotFound)
     }
 }
+
+//could directly get a pathBuffer from url
+#[get("/people/<person_id>/files_url/<files_url>")]
+fn get_person_file_raw_by_url(person_id: u32, files_url: String) -> Result<NamedFile, Status> {
+    let path = get_physical_file_path(get_physical_person_root(person_id).files, files_url);
+    if let Ok(res) = NamedFile::open(path) {
+        Ok(res)
+    } else {
+        Err(Status::NotFound)
+    }
+}
+
 //could directly get a pathBuffer from url
 #[get("/people/<parent_id>/family/files_url/<files_url>")]
 fn get_family_file_raw_by_url(parent_id: u32, files_url: String) -> Result<NamedFile, Status> {
-    if let Ok(res) = files::get_family_file_raw_by_url(parent_id, files_url) {
+    let path = get_physical_file_path(get_physical_family_root(parent_id).files, files_url);
+    if let Ok(res) = NamedFile::open(path) {
         Ok(res)
     } else {
         Err(Status::NotFound)
@@ -200,6 +231,10 @@ fn main() {
                 get_contract_files,
                 get_contract_file_raw_by_url,
                 new_contract_files,
+                //person
+                get_person_files,
+                get_person_file_raw_by_url,
+                new_person_files,
                 //family
                 get_family_files,
                 get_family_file_raw_by_url,

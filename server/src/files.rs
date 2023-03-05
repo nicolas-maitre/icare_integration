@@ -6,7 +6,6 @@ use std::{
     time::SystemTime,
 };
 
-use rocket::response::NamedFile;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use urlencoding::encode;
 
@@ -92,6 +91,13 @@ pub fn get_contract_files_struct(person_id: u32, contract_number: u32) -> Option
         &PathBuf::new(),
     )
 }
+pub fn get_person_files_struct(person_id: u32) -> Option<Vec<AnyFile>> {
+    get_sub_files(
+        get_base_person_files_url(person_id),
+        &get_physical_person_root(person_id).files,
+        &PathBuf::new(),
+    )
+}
 pub fn get_family_files_struct(parent_id: u32) -> Option<Vec<AnyFile>> {
     get_sub_files(
         get_base_family_files_url(parent_id),
@@ -102,8 +108,8 @@ pub fn get_family_files_struct(parent_id: u32) -> Option<Vec<AnyFile>> {
 
 #[derive(Clone)]
 pub struct PhysicalRoot {
-    files: PathBuf,
-    history: PathBuf,
+    pub files: PathBuf,
+    pub history: PathBuf,
 }
 impl PhysicalRoot {
     fn from_base_root(base_root: PathBuf) -> Self {
@@ -115,28 +121,28 @@ impl PhysicalRoot {
 }
 
 pub fn get_physical_contract_root(person_id: u32, contract_number: u32) -> PhysicalRoot {
-    let base_root = Path::new(BASE_FILES_PATH).join(
-        [
-            "people",
-            &person_id.to_string(),
-            "contracts",
-            &contract_number.to_string(),
-        ]
-        .iter()
-        .collect::<PathBuf>(),
-    );
+    let base_root = Path::new(BASE_FILES_PATH)
+        .join("people")
+        .join(person_id.to_string())
+        .join("contracts")
+        .join(contract_number.to_string());
+    PhysicalRoot::from_base_root(base_root)
+}
+pub fn get_physical_person_root(person_id: u32) -> PhysicalRoot {
+    let base_root = Path::new(BASE_FILES_PATH)
+        .join("people")
+        .join(person_id.to_string());
+    PhysicalRoot::from_base_root(base_root)
+}
+pub fn get_physical_family_root(parent_id: u32) -> PhysicalRoot {
+    let base_root = Path::new(BASE_FILES_PATH)
+        .join("people")
+        .join(parent_id.to_string())
+        .join("family");
     PhysicalRoot::from_base_root(base_root)
 }
 
-pub fn get_physical_family_root(parent_id: u32) -> PhysicalRoot {
-    let base_root = Path::new(BASE_FILES_PATH).join(
-        ["people", &parent_id.to_string(), "family"]
-            .iter()
-            .collect::<PathBuf>(),
-    );
-    PhysicalRoot::from_base_root(base_root)
-}
-fn get_physical_file_path(physical_files_root: PathBuf, url: String) -> PathBuf {
+pub fn get_physical_file_path(physical_files_root: PathBuf, url: String) -> PathBuf {
     let mut clean_url = url;
     for _ in 0..clean_url.len() {
         let char = clean_url.chars().next().unwrap();
@@ -154,6 +160,9 @@ fn get_base_contract_files_url(person_id: u32, contract_number: u32) -> String {
         "/people/{}/contracts/{}/files_url/",
         person_id, contract_number
     )
+}
+fn get_base_person_files_url(person_id: u32) -> String {
+    format!("/people/{}/files_url/", person_id)
 }
 fn get_base_family_files_url(parent_id: u32) -> String {
     format!("/people/{}/family/files_url/", parent_id)
@@ -219,26 +228,6 @@ fn get_sub_files(
         })
         .collect();
     return Some(sub_files);
-}
-
-pub fn get_contract_file_raw_by_url(
-    person_id: u32,
-    contract_number: u32,
-    url: String,
-) -> Result<NamedFile, std::io::Error> {
-    let path = get_physical_file_path(
-        get_physical_contract_root(person_id, contract_number).files,
-        url,
-    );
-    NamedFile::open(path)
-}
-
-pub fn get_family_file_raw_by_url(
-    parent_id: u32,
-    url: String,
-) -> Result<NamedFile, std::io::Error> {
-    let path = get_physical_file_path(get_physical_family_root(parent_id).files, url);
-    NamedFile::open(path)
 }
 
 #[derive(Deserialize, Debug)]
