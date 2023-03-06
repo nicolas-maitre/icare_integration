@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_URL } from "../env";
+import { createPortal } from "react-dom";
 import { z } from "zod";
-import { AnyFile, NewFile, ZodAnyFile } from "../types/file";
 import { useRef, useState } from "react";
 import * as React from "react";
 import styled from "styled-components";
-import { fileEntriesToNewFiles } from "../helpers/files";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_URL } from "../env";
+import { AnyFile, NewFile, ZodAnyFile } from "../types/file";
+import { countFiles, fileEntriesToNewFiles } from "../helpers/files";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
 import { FilePreviewer } from "./FilePreviewer";
@@ -70,14 +71,25 @@ export function useUploadFiles(rootPath: string) {
 
 type SplitExplorerProps = {
   rootPath: string;
+  tabNotifContainer?: Element;
 };
-export function SplitExplorer({ rootPath }: SplitExplorerProps) {
+export function SplitExplorer({
+  rootPath,
+  tabNotifContainer,
+}: SplitExplorerProps) {
   const { data: files, isLoading, isError } = useFiles(rootPath);
   const { mutate: triggerFileUpload } = useUploadFiles(rootPath);
   const filesPanelRef = useRef<HTMLDivElement>(null);
   const [selectedFile, setSelectedFile] = useState<AnyFile | undefined>();
+  const filesCount = files ? countFiles(files) : 0;
+
   return (
     <>
+      {tabNotifContainer &&
+        createPortal(
+          <>{!!filesCount && <>({filesCount})</>}</>,
+          tabNotifContainer
+        )}
       <ScSplitExplorer>
         <ScFilesPanel
           ref={filesPanelRef}

@@ -5,6 +5,7 @@ export type ContractIntegration = {
   container: Element;
   personId: number;
   contractNumber: number;
+  tabNotifContainer?: Element;
 };
 
 export async function integrateContract({
@@ -20,6 +21,7 @@ export async function integrateContract({
     li.addEventListener("click", onDeselectDocsTab);
   });
 
+  const tabNotifContainer = createElem("b");
   const docTabLI = e(tabList).addElem(
     "li",
     {
@@ -47,7 +49,8 @@ export async function integrateContract({
           role: "presentation",
         },
       },
-      "Documents"
+      "Documents ",
+      tabNotifContainer
     )
   );
   const docTabContentDiv = e(tabsContainer).addElem(
@@ -126,5 +129,6 @@ export async function integrateContract({
     container: docTabContentDiv,
     personId,
     contractNumber,
+    tabNotifContainer,
   };
 }

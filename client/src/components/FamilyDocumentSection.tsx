@@ -3,11 +3,20 @@ import * as React from "react";
 import { FamilyIntegration } from "../integrations/familyIntegration";
 import { SplitExplorer } from "./SplitExplorer";
 
-export type FamilyDocumentSection = Pick<FamilyIntegration, "parentId">;
-export function FamilyDocumentSection({ parentId }: FamilyDocumentSection) {
+export type FamilyDocumentSection = Pick<
+  FamilyIntegration,
+  "parentId" | "tabNotifContainer"
+>;
+export function FamilyDocumentSection({
+  parentId,
+  tabNotifContainer,
+}: FamilyDocumentSection) {
   return (
     <ScFamilyDocumentSection>
-      <SplitExplorer rootPath={`/people/${parentId}/family`} />
+      <SplitExplorer
+        rootPath={`/people/${parentId}/family`}
+        tabNotifContainer={tabNotifContainer}
+      />
     </ScFamilyDocumentSection>
   );
 }

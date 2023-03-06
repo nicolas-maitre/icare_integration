@@ -1,5 +1,5 @@
 import { API_URL } from "../env";
-import { File, NewFile } from "../types/file";
+import { AnyFile, File, NewFile } from "../types/file";
 
 export function fileEntriesToNewFiles(entries: FileSystemEntry[]): NewFile[] {
   return entries.flatMap((entry) => {
@@ -25,4 +25,12 @@ export function fileEntriesToNewFiles(entries: FileSystemEntry[]): NewFile[] {
 
 export function getDownloadLink(file: File) {
   return `${API_URL}${file.url}`;
+}
+
+export function countFiles(files: AnyFile[]): number {
+  return files.reduce(
+    (prev, file) =>
+      prev + (file.type === "folder" ? countFiles(file.children) : 1),
+    0
+  );
 }

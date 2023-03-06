@@ -1,9 +1,10 @@
-import { e, waitForSelector } from "../helpers/elements";
+import { createElem, e, waitForSelector } from "../helpers/elements";
 import { IntegrateProps } from "./integrations";
 
 export type FamilyIntegration = {
   container: Element;
   parentId: number;
+  tabNotifContainer?: Element;
 };
 
 export async function integrateFamily({
@@ -15,6 +16,11 @@ export async function integrateFamily({
 
   //"Family" is only available on the main parent
   if (!isParent) return null;
+
+  //add to family tab head
+  const familyTabHead = document.getElementById("tabs0head2")!;
+  const tabNotifContainer = createElem("b");
+  familyTabHead.append(" ", tabNotifContainer);
 
   //add to family tab
   const familyTabContent = await waitForSelector(
@@ -40,5 +46,6 @@ export async function integrateFamily({
   return {
     container,
     parentId: +parentIdStr,
+    tabNotifContainer,
   };
 }
