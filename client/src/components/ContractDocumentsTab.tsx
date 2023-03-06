@@ -1,13 +1,7 @@
 import * as React from "react";
 import { useRef, useState } from "react";
 import styled from "styled-components";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnyFile, NewFile, ZodAnyFile } from "../types/file";
 import { FileList } from "./FileList";
 import { EdgeResizer } from "./SplitResizer";
@@ -15,17 +9,7 @@ import { z } from "zod";
 import { FilePreviewer } from "./FilePreviewer";
 import { API_URL } from "../env";
 import { fileEntriesToNewFiles } from "../helpers/files";
-
-const queryClient = new QueryClient();
-export function DocumentsTabContent(props: DocumentsTabContentProps) {
-  return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <DocumentsTabContentContent {...props} />
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
-}
+import { ContractIntegration } from "../integrations/contractPageIntegration";
 
 function useContractFiles(personId: number, contractId: number) {
   return useQuery(
@@ -96,14 +80,10 @@ function useUploadContractFiles(personId: number, contractId: number) {
   );
 }
 
-interface DocumentsTabContentProps {
-  personId: number;
-  contractNumber: number;
-}
-export function DocumentsTabContentContent({
+export function ContractDocumentsTab({
   personId,
   contractNumber,
-}: DocumentsTabContentProps) {
+}: ContractIntegration) {
   const {
     data: files,
     isLoading,
