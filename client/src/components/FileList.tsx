@@ -83,7 +83,7 @@ function FileLine({
           setIsOpen(true);
           onSelect?.(file);
         }}
-        onDoubleClick={(evt) => {
+        onDoubleClick={() => {
           if (file.type == "file") {
             window.open(getDownloadLink(file), "_blank"); //?.focus();
           }

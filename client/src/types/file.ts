@@ -30,7 +30,7 @@ export function getFileType(file: AnyFile) {
   return file.type === "folder"
     ? "folder"
     : fileNameParts.length > 1
-    ? fileNameParts.at(-1)
+    ? fileNameParts.at(-1)?.toLowerCase()
     : undefined;
 }
 

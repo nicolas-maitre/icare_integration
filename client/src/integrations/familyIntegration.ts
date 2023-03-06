@@ -11,7 +11,7 @@ export async function integrateFamily({
 }: IntegrateProps): Promise<FamilyIntegration | null> {
   const form = document.querySelector("form[name=PersonSpeichernForm]");
   const isAdult = !!form;
-  const isParent = form && form.id === "peredit";
+  const isParent = isAdult && form.id === "peredit";
 
   //"Family" is only available on the main parent
   if (!isParent) return null;
@@ -21,7 +21,7 @@ export async function integrateFamily({
     "#tabs0tab2 > table > tbody > tr > td > div.container-fluid"
   );
 
-  e(familyTabContent).addElem("h3", null, "Documents");
+  e(familyTabContent).addElem("h3", null, "Documents familiaux");
   const container = e(familyTabContent).addElem("div", {
     className: "form-group row",
   });
