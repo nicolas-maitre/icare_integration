@@ -1,4 +1,5 @@
 import { createElem, e, waitForSelector } from "../helpers/elements";
+import { IntegrateProps } from "./integrations";
 
 export type ContractIntegration = {
   container: Element;
@@ -6,12 +7,9 @@ export type ContractIntegration = {
   contractNumber: number;
 };
 
-export type IntegrateContractPageProps = {
-  renderApp(): void;
-};
-export async function integrateContractPage({
+export async function integrateContract({
   renderApp,
-}: IntegrateContractPageProps): Promise<ContractIntegration> {
+}: IntegrateProps): Promise<ContractIntegration> {
   const titleElement = document.querySelector("#jqContentTable #data h2");
 
   const tabsContainer = await waitForSelector("#tabs");
@@ -70,11 +68,7 @@ export async function integrateContractPage({
 
   //query person id and contract id from title
   const [personId, contractNumber] =
-    titleElement?.textContent
-      ?.trim()
-      .split("-")
-      .map((i) => parseInt(i))
-      .slice(-2) ?? [];
+    titleElement?.textContent?.trim().split("-").map(Number).slice(-2) ?? [];
 
   //MANAGE TAB STATE
   let lastSelectedLI =

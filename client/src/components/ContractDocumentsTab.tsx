@@ -9,7 +9,7 @@ import { z } from "zod";
 import { FilePreviewer } from "./FilePreviewer";
 import { API_URL } from "../env";
 import { fileEntriesToNewFiles } from "../helpers/files";
-import { ContractIntegration } from "../integrations/contractPageIntegration";
+import { ContractIntegration } from "../integrations/contractIntegration";
 
 function useContractFiles(personId: number, contractId: number) {
   return useQuery(
@@ -80,10 +80,15 @@ function useUploadContractFiles(personId: number, contractId: number) {
   );
 }
 
+export type ContractDocumentsTabProps = Pick<
+  ContractIntegration,
+  "personId" | "contractNumber"
+>;
+
 export function ContractDocumentsTab({
   personId,
   contractNumber,
-}: ContractIntegration) {
+}: ContractDocumentsTabProps) {
   const {
     data: files,
     isLoading,

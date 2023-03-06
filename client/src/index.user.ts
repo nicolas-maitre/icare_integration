@@ -17,8 +17,12 @@ import { urlCheck } from "./helpers/url";
 import { App } from "./components/App";
 import {
   ContractIntegration,
-  integrateContractPage,
-} from "./integrations/contractPageIntegration";
+  integrateContract,
+} from "./integrations/contractIntegration";
+import {
+  FamilyIntegration,
+  integrateFamily,
+} from "./integrations/familyIntegration";
 
 try {
   await (async () => {
@@ -28,23 +32,30 @@ try {
       "/icare/Ad/WartelisteToPlatzierungPrepare.do",
       "/icare/Be/PlatzierungVertragKopieren.do",
     ]);
+    const isPersonPage = urlCheck(["/icare/Be/PersonEdit.do"]);
 
-    //if no supported page
-    if (!isContractPage) return;
+    //if no supported page (optimisation)
+    if (!isContractPage && !isPersonPage) return;
 
     //setup react into an element that isn't displayed, we use portals for the different parts
     const dummyElement = createElem("div");
     const root = createRoot(dummyElement);
 
     //create integrations
-    let contractIntegration: ContractIntegration | undefined;
+    let contractIntegration: ContractIntegration | null = null;
     if (isContractPage) {
-      contractIntegration = await integrateContractPage({ renderApp });
+      contractIntegration = await integrateContract({ renderApp });
+    }
+    let familyIntegration: FamilyIntegration | null = null;
+    if (isPersonPage) {
+      familyIntegration = await integrateFamily({ renderApp });
     }
 
     //render
     function renderApp() {
-      root.render(reactCreateElement(App, { contractIntegration }));
+      root.render(
+        reactCreateElement(App, { contractIntegration, familyIntegration })
+      );
     }
     renderApp();
   })();
