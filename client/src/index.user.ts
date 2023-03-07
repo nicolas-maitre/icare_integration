@@ -32,7 +32,10 @@ try {
       "/icare/Ad/WartelisteToPlatzierungPrepare.do",
       "/icare/Be/PlatzierungVertragKopieren.do",
     ]);
-    const isPersonPage = urlCheck(["/icare/Be/PersonEdit.do"]);
+    const isPersonPage = urlCheck([
+      "/icare/Be/PersonEdit.do",
+      "/icare/Ad/PersonSpeichern.do",
+    ]);
 
     //if no supported page (optimisation)
     if (!isContractPage && !isPersonPage) return;

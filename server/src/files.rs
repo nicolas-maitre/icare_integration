@@ -174,7 +174,7 @@ fn get_sub_files(
     path: &PathBuf,
 ) -> Option<Vec<AnyFile>> {
     let physical_path = Path::new(files_root).join(path);
-    println!("physical_path {:?}", physical_path.clone());
+    // println!("physical_path {:?}", physical_path.clone());
     let res_dir = match read_dir(physical_path.clone()) {
         Ok(res) => res,
         Err(err) => {
