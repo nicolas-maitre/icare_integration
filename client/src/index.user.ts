@@ -23,6 +23,10 @@ import {
   FamilyIntegration,
   integrateFamily,
 } from "./integrations/familyIntegration";
+import {
+  PersonIntegration,
+  integratePerson,
+} from "./integrations/personIntegration";
 
 try {
   await (async () => {
@@ -47,8 +51,10 @@ try {
       contractIntegration = await integrateContract({ renderApp });
     }
     let familyIntegration: FamilyIntegration | null = null;
+    // let personIntegration: PersonIntegration | null = null;
     if (isPersonPage) {
       familyIntegration = await integrateFamily({ renderApp });
+      // personIntegration = await integratePerson({ renderApp });
     }
 
     //render
