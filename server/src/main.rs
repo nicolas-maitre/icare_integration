@@ -18,6 +18,8 @@ use rocket_multipart_form_data::{
     MultipartFormData, MultipartFormDataField, MultipartFormDataOptions, Repetition,
 };
 use serde::Serialize;
+
+use crate::env::{HTTP_IP, HTTP_PORT};
 mod cors;
 mod env;
 mod files;
@@ -217,7 +219,8 @@ fn get_family_file_raw_by_url(parent_id: u32, files_url: String) -> Result<Named
 
 fn main() {
     let rocket_cfg = Config::build(config::Environment::Development)
-        .address("127.0.0.1")
+        .address(HTTP_IP)
+        .port(HTTP_PORT)
         .unwrap();
 
     println!("using file root: {}", env::BASE_FILES_PATH);
