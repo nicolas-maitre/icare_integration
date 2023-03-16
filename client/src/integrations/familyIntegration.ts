@@ -1,10 +1,8 @@
 import { createElem, e, waitForSelector } from "../helpers/elements";
-import { IntegrateProps } from "./integrations";
+import { IntegrateProps, IntegrationBase } from "./integrations";
 
-export type FamilyIntegration = {
-  container: Element;
+export type FamilyIntegration = IntegrationBase & {
   parentId: number;
-  tabNotifContainer?: Element;
 };
 
 export async function integrateFamily({

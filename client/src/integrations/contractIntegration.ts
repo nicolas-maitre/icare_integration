@@ -1,11 +1,9 @@
 import { createElem, e, waitForSelector } from "../helpers/elements";
-import { IntegrateProps } from "./integrations";
+import { IntegrateProps, IntegrationBase } from "./integrations";
 
-export type ContractIntegration = {
-  container: Element;
+export type ContractIntegration = IntegrationBase & {
   personId: number;
   contractNumber: number;
-  tabNotifContainer?: Element;
 };
 
 export async function integrateContract({
